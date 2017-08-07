@@ -1,0 +1,13 @@
+﻿  IO.cpp
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(23): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(32): warning C4146: 一元负运算符应用于无符号类型，结果仍为无符号类型
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(35): warning C4244: “参数”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(106): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(107): warning C4244: “初始化”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(114): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(120): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(139): warning C4146: 一元负运算符应用于无符号类型，结果仍为无符号类型
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(204): warning C4838: 从“int”转换到“unsigned int”需要收缩转换
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(205): warning C4715: “fetch”: 不是所有的控件路径都返回值
+  IO.vcxproj -> C:\Users\zl\documents\visual studio 2017\Projects\IO\Debug\IO.exe
+  IO.vcxproj -> C:\Users\zl\documents\visual studio 2017\Projects\IO\Debug\IO.pdb (Partial PDB)
