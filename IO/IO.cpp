@@ -28,7 +28,7 @@ databaseIO::databaseIO(string indexFileName, string valueFileName, string availa
 		dataBPTtypeTmp.key = key;
 		dataBPTtypeTmp.valuePos = p_int;
 		dataBPT.push_back(dataBPTtypeTmp);
-		if (key == 0 && p_int == 0) {
+		if (key == -1 && p_int == -1) {
 			indexFileStream.seekg(-(UNINTSIZE + INTSIZE), ios::cur);
 			p = indexFileStream.tellp();
 			indexFileStream.seekg(2 * (UNINTSIZE + INTSIZE), ios::cur);
@@ -96,7 +96,7 @@ void databaseIO::read()
 	cout << endl;
 }
 
-dataBPTtype databaseIO::insert(unsigned int key, datatype data)
+dataBPTtype databaseIO::insert(unsigned int key, datatype &data)
 {
 	dataBPTtype dataBPTTmp;
 	dataBPTTmp.key = key;
@@ -124,43 +124,23 @@ dataBPTtype databaseIO::insert(unsigned int key, datatype data)
 	return dataBPTTmp;
 }
 
-int databaseIO::remove(unsigned int key)
+void databaseIO::remove(dataBPTtype &pos)
 {
+	streampos p = pos.indexPos;
+	int tmp = -1;
 	indexFileStream.clear();
-	indexFileStream.seekp(0, ios::beg);
-	unsigned int keyFromIndex;
-	int p_int;
-	streampos p;
-	while (indexFileStream.peek() != EOF) {
-		indexFileStream.read((char *)(&keyFromIndex), UNINTSIZE);
-		indexFileStream.read((char *)(&p_int), INTSIZE);
-		if (key == keyFromIndex) {
+	indexFileStream.seekg(p, ios::beg);
+	indexFileStream.write((char *)(&tmp), UNINTSIZE);
+	indexFileStream.write((char *)(&tmp), INTSIZE);
 
-			indexFileStream.seekg(-(UNINTSIZE + INTSIZE), ios::cur);
-
-		}
-	}
-	return 0;
 }
 
-int databaseIO::modify(unsigned int key, datatype data)
+void databaseIO::modify(dataBPTtype &pos, datatype &data)
 {
-	indexFileStream.clear();
-	indexFileStream.seekp(0, ios::beg);
-	int keyFromIndex, p_int;
-	streampos p;
-	while (indexFileStream.peek() != EOF) {
-		indexFileStream.read((char *)(&keyFromIndex), UNINTSIZE);
-		indexFileStream.read((char *)(&p_int), INTSIZE);
-		if (key == keyFromIndex) {
-			valueFileStream.clear();
-			p = p_int;
-			valueFileStream.seekp(p, ios::beg);
-			valueFileStream.write((char *)(&data), DATATYPESIZE);
-			return 1;
-		}
-	}
-	return 0;
+	streampos p = pos.valuePos;
+	valueFileStream.clear();
+	valueFileStream.seekp(p, ios::beg);
+	valueFileStream.write((char *)(&data), DATATYPESIZE);
 }
 
 void databaseIO::flush()
@@ -206,9 +186,9 @@ dataBPTtype fetch(vector<dataBPTtype> &dataBPT, unsigned int key) {
 
 int main()
 {
-	string indexFileName = "J:/database/index.dat";
-	string valueFileName = "J:/database/value.dat";
-	string availableSpaceFileName = "J:/database/availableSpace.dat";
+	string indexFileName = "C:/database/index.dat";
+	string valueFileName = "C:/database/value.dat";
+	string availableSpaceFileName = "C:/database/availableSpace.dat";
 	databaseIO db(indexFileName, valueFileName, availableSpaceFileName);
 	datatype data;
 	if (conversion(data, 1, "Hello World", "via Wzl")) {
@@ -232,7 +212,7 @@ int main()
 			cout << "Can't find id." << endl;
 		}
 		else {
-			db.modify(dataBPTTmp.key, data);
+			db.modify(dataBPTTmp, data);
 		}
 	}
 	//db.remove(2);

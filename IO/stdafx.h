@@ -42,9 +42,9 @@ public:
 	~databaseIO();
 	void read();
 	void write();
-	dataBPTtype insert(unsigned int key, datatype data);
-	int remove(unsigned int key);
-	int modify(unsigned int key, datatype data);
+	dataBPTtype insert(unsigned int key, datatype &data);
+	void remove(dataBPTtype &pos);
+	void modify(dataBPTtype &pos, datatype &data);
 	void flush();
 private:
 	fstream indexFileStream;
