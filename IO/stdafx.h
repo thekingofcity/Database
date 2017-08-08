@@ -53,6 +53,8 @@ private:
 	vector<int> availableSpace;
 	vector<int> availableSpaceIndex;
 	string availableSpaceFileName_;
+	//availableSpace.dat 加载关闭更新一次 flush更新一次
+	//剩余时候都在vector<int> availableSpace中更新
 };
 
 

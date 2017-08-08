@@ -32,7 +32,8 @@ databaseIO::databaseIO(string indexFileName, string valueFileName, string availa
 			indexFileStream.seekg(-(UNINTSIZE + INTSIZE), ios::cur);
 			p = indexFileStream.tellp();
 			indexFileStream.seekg(2 * (UNINTSIZE + INTSIZE), ios::cur);
-			availableSpaceIndex.push_back(p);
+			int p_int = p;
+			availableSpaceIndex.push_back(p_int);
 		}
 	}
 	indexFileStream.clear();//Just in case.
@@ -85,12 +86,14 @@ void databaseIO::read()
 		indexFileStream.read((char *)(&key), UNINTSIZE);
 		//indexFileStream.read((char *)(&p), sizeof(streampos));
 		indexFileStream.read((char *)(&p_int), INTSIZE);
-		p = p_int;
-		valueFileStream.seekp(p, ios::beg);
-		valueFileStream.read((char *)(&data), DATATYPESIZE);
-		cout << "id=" << data.id << endl;
-		cout << "data=" << data.data << endl;
-		cout << "remark=" << data.remark << endl;
+		if (key != -1 && p_int != -1) {
+			p = p_int;
+			valueFileStream.seekp(p, ios::beg);
+			valueFileStream.read((char *)(&data), DATATYPESIZE);
+			cout << "id=" << data.id << endl;
+			cout << "data=" << data.data << endl;
+			cout << "remark=" << data.remark << endl;
+		}
 	}
 	cout << "That's the end of value.dat" << endl;
 	cout << endl;
@@ -98,17 +101,27 @@ void databaseIO::read()
 
 dataBPTtype databaseIO::insert(unsigned int key, datatype &data)
 {
+	int p_int;
 	dataBPTtype dataBPTTmp;
 	dataBPTTmp.key = key;
 	indexFileStream.clear();
 	valueFileStream.clear();
-	valueFileStream.seekg(0, ios::end);
-	dataBPTTmp.valuePos = valueFileStream.tellg();
-	int p_int = valueFileStream.tellg();
-	valueFileStream.write((char *)(&data), DATATYPESIZE);
-	if (availableSpaceIndex.size() != 0) {
-		p_int = availableSpaceIndex.at(availableSpaceIndex.size() - 1);
+	if (availableSpace.size() != 0) {
+		p_int = availableSpace.at(availableSpace.size() - 1);
 		streampos p = p_int;
+		dataBPTTmp.valuePos = p_int;
+		valueFileStream.seekg(p, ios::beg);
+		valueFileStream.write((char *)(&data), DATATYPESIZE);
+		availableSpace.pop_back();
+	}
+	else {
+		valueFileStream.seekg(0, ios::end);
+		dataBPTTmp.valuePos = valueFileStream.tellg();
+		p_int = valueFileStream.tellg();
+		valueFileStream.write((char *)(&data), DATATYPESIZE);
+	}
+	if (availableSpaceIndex.size() != 0) {
+		streampos p = availableSpaceIndex.at(availableSpaceIndex.size() - 1);
 		availableSpaceIndex.pop_back();
 		indexFileStream.seekg(p, ios::beg);
 		dataBPTTmp.indexPos = indexFileStream.tellg();
@@ -127,12 +140,13 @@ dataBPTtype databaseIO::insert(unsigned int key, datatype &data)
 void databaseIO::remove(dataBPTtype &pos)
 {
 	streampos p = pos.indexPos;
-	int tmp = -1;
+	int tmp = -1, p_int = p;
+	availableSpaceIndex.push_back(p_int);
 	indexFileStream.clear();
 	indexFileStream.seekg(p, ios::beg);
 	indexFileStream.write((char *)(&tmp), UNINTSIZE);
 	indexFileStream.write((char *)(&tmp), INTSIZE);
-
+	availableSpace.push_back(pos.valuePos);
 }
 
 void databaseIO::modify(dataBPTtype &pos, datatype &data)
@@ -147,6 +161,14 @@ void databaseIO::flush()
 {
 	indexFileStream.flush();
 	valueFileStream.flush();
+	availableSpaceFileStream.open(availableSpaceFileName_, ios::binary | ios::in | ios::out | ios::trunc);
+	int availableSpaceTmp, i, j;
+	j = availableSpace.size();
+	for (i = 0; i < j; i++) {
+		availableSpaceTmp = availableSpace.at(availableSpace.size() - 1);
+		availableSpaceFileStream.write((char *)(&availableSpaceTmp), INTSIZE);
+	}
+	availableSpaceFileStream.close();
 }
 
 int conversion(datatype &data, unsigned int id, string datastr, string remark) {
@@ -192,30 +214,38 @@ int main()
 	databaseIO db(indexFileName, valueFileName, availableSpaceFileName);
 	datatype data;
 	if (conversion(data, 1, "Hello World", "via Wzl")) {
-		//获得即将添加的key
+		//dataBPT.size()获得即将添加的key
 		dataBPT.push_back(db.insert(dataBPT.size(), data));
 	}
 	if (conversion(data, 2, "test", "test")) {
-		//获得即将添加的key
 		dataBPT.push_back(db.insert(dataBPT.size(), data));
 	}
 	if (conversion(data, 3, "Hello World", "via Wmy")) {
-		//获得即将添加的key
+		dataBPT.push_back(db.insert(dataBPT.size(), data));
+	}
+	if (conversion(data, 4, "I love you", "To shijia")) {
 		dataBPT.push_back(db.insert(dataBPT.size(), data));
 	}
 	db.flush();
 	db.read();
 	sort(dataBPT.begin(), dataBPT.end(), sortByKey);
+	//if (conversion(data, 2, "HW", "shijia")) {
+	//	dataBPTtype dataBPTTmp = fetch(dataBPT, 1);
+	//	if (dataBPTTmp.key == -1) {
+	//		cout << "Can't find id." << endl;
+	//	}
+	//	else {
+	//		db.modify(dataBPTTmp, data);
+	//	}
+	//}
+	db.remove(fetch(dataBPT, 1));
+	db.remove(fetch(dataBPT, 2));
+	db.flush();
+	//db.read();
 	if (conversion(data, 2, "HW", "shijia")) {
-		dataBPTtype dataBPTTmp = fetch(dataBPT, 1);
-		if (dataBPTTmp.key == -1) {
-			cout << "Can't find id." << endl;
-		}
-		else {
-			db.modify(dataBPTTmp, data);
-		}
+		//指定修改的key
+		dataBPT.push_back(db.insert(1, data));
 	}
-	//db.remove(2);
 	db.flush();
 	db.read();
 	getchar();
