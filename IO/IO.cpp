@@ -6,11 +6,13 @@
 
 databaseIO::databaseIO(string indexFileName, string valueFileName, string availableSpaceFileName, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id)
 {
-	indexFileStream.open(indexFileName, ios::binary | ios::in | ios::out | ios::trunc);
-	valueFileStream.open(valueFileName, ios::binary | ios::in | ios::out | ios::trunc);
+	//indexFileStream.open(indexFileName, ios::binary | ios::in | ios::out | ios::trunc);
+	//valueFileStream.open(valueFileName, ios::binary | ios::in | ios::out | ios::trunc);
 	availableSpaceFileStream.open(availableSpaceFileName, ios::binary | ios::in | ios::out);
-	//indexFileStream.open(indexFileName, ios::binary | ios::in | ios::out);
-	//valueFileStream.open(valueFileName, ios::binary | ios::in | ios::out);
+	indexFileStream.open(indexFileName, ios::binary | ios::in | ios::out);
+	valueFileStream.open(valueFileName, ios::binary | ios::in | ios::out);
+	if (!indexFileStream.is_open()) { indexFileStream.close(); indexFileStream.open(indexFileName, ios::binary | ios::in | ios::out | ios::trunc); }
+	if (!valueFileStream.is_open()) { valueFileStream.close(); valueFileStream.open(valueFileName, ios::binary | ios::in | ios::out | ios::trunc); }
 	//ios::trunc	Any contents that existed in the file before it is open are discarded.
 	//still need to be enhanced https://zhidao.baidu.com/question/146262844.html
 
@@ -99,9 +101,9 @@ void databaseIO::read()
 			p = p_int;
 			valueFileStream.seekp(p, ios::beg);
 			valueFileStream.read((char *)(&data), DATATYPESIZE);
-			cout << "id=" << data.id << endl;
-			cout << "data=" << data.data << endl;
-			cout << "remark=" << data.remark << endl;
+			cout << "id      =" << data.id << endl;
+			cout << "data    =" << data.data << endl;
+			cout << "remark  =" << data.remark << endl;
 		}
 	}
 	cout << "That's the end of value.dat" << endl;
@@ -209,21 +211,33 @@ dataBPTtype fetch(vector<dataBPTtype> &dataBPT, unsigned int key) {
 	j = dataBPT.size();
 	for (i = 0; i < j; i++) {
 		if (dataBPT.at(i).key == key) {
-			return dataBPT.at(i);
+			dataBPTtype dataBPTtypeTmp = dataBPT.at(i);
+			dataBPT.erase(dataBPT.begin() + i - 1);
+			return dataBPTtypeTmp;
 		}
 	}
 	dataBPTtype return0 = { -1,-1,-1 };
+	return return0;
 }
 
 dataBPTtype fetchById(vector<dataBPTtype_id> &dataBPT_id, unsigned int id, vector<dataBPTtype> &dataBPT) {
 	int i, j, key;
+	vector<dataBPTtype_id>::iterator itor;
+	vector<dataBPTtype_id>::iterator itor2;
 	j = dataBPT_id.size();
-	for (i = 0; i < j; i++) {
-		if (dataBPT_id.at(i).id == id) {
-			return fetch(dataBPT, dataBPT_id.at(i).key);
+	for (itor = dataBPT_id.begin(); itor != dataBPT_id.end();) {
+		if (itor->id == id) {
+			key = itor->key;
+			itor2 = itor;
+			itor = dataBPT_id.erase(itor);
+			return fetch(dataBPT, key);
+		}
+		else {
+			itor++;
 		}
 	}
 	dataBPTtype return0 = { -1,-1,-1 };
+	return return0;
 }
 
 int main()
@@ -236,34 +250,9 @@ int main()
 	databaseIO db(indexFileName, valueFileName, availableSpaceFileName, dataBPT, dataBPT_id);
 	datatype data;
 	dataBPTtype_id dataBPT_idTmp;
-	if (conversion(data, 1, "Hello World", "via Wzl")) {
-		//get the key from dataBPT.size()
-		//key.auto-incresement=true
-		dataBPT_idTmp.id = 1;
-		dataBPT_idTmp.key = dataBPT.size();
-		dataBPT_id.push_back(dataBPT_idTmp);
-		dataBPT.push_back(db.insert(dataBPT.size(), data));
-	}
-	if (conversion(data, 2, "test", "test")) {
-		dataBPT_idTmp.id = 2;
-		dataBPT_idTmp.key = dataBPT.size();
-		dataBPT_id.push_back(dataBPT_idTmp);
-		dataBPT.push_back(db.insert(dataBPT.size(), data));
-	}
-	if (conversion(data, 3, "Hello World", "via Wmy")) {
-		dataBPT_idTmp.id = 3;
-		dataBPT_idTmp.key = dataBPT.size();
-		dataBPT_id.push_back(dataBPT_idTmp);
-		dataBPT.push_back(db.insert(dataBPT.size(), data));
-	}
-	if (conversion(data, 4, "I love you", "To shijia")) {
-		dataBPT_idTmp.id = 4;
-		dataBPT_idTmp.key = dataBPT.size();
-		dataBPT_id.push_back(dataBPT_idTmp);
-		dataBPT.push_back(db.insert(dataBPT.size(), data));
-	}
-	db.flush();
-	db.read();
+
+	//db.flush();
+	//db.read();
 	//sort(dataBPT.begin(), dataBPT.end(), sortByKey);
 	//if (conversion(data, 2, "HW", "shijia")) {
 	//	dataBPTtype dataBPTTmp = fetch(dataBPT, 1);
@@ -288,14 +277,17 @@ int main()
 	char data_[DATASIZE];
 	char remark[REMARKSIZE];
 	cout << "1 for insert 2 for modify 3 for remove 4 for flush 5 for read." << endl;
-	cout << "Input operation <<";
+	cout << "Input operation << ";
 	cin >> tmp;
 	while (tmp != 0) {
-		switch (tmp){
+		switch (tmp) {
 		case 1:
+			cout << "Please input id." << endl;
 			cin >> id;
-			cin >> data_;
-			cin >> remark;
+			cout << "Please input data." << endl;
+			scanf_s("%s", &data_, DATASIZE);
+			cout << "Please input remark." << endl;
+			scanf_s("%s", &remark, REMARKSIZE);
 			if (conversion(data, id, data_, remark)) {
 				dataBPT_idTmp.id = id;
 				dataBPT_idTmp.key = dataBPT.size();
@@ -304,11 +296,14 @@ int main()
 			}
 			break;
 		case 2:
+			cout << "Please input id." << endl;
 			cin >> id;
-			cin >> data_;
-			cin >> remark;
+			cout << "Please input data." << endl;
+			scanf_s("%s", &data_, DATASIZE);
+			cout << "Please input remark." << endl;
+			scanf_s("%s", &remark, REMARKSIZE);
 			if (conversion(data, id, data_, remark)) {
-				dataBPTtype dataBPTTmp = fetch(dataBPT, 1);
+				dataBPTtype dataBPTTmp = fetchById(dataBPT_id, id, dataBPT);
 				if (dataBPTTmp.key == -1) {
 					cout << "Can't find id." << endl;
 				}
@@ -318,6 +313,7 @@ int main()
 			}
 			break;
 		case 3:
+			cout << "Please input id." << endl;
 			cin >> id;
 			dataBPTtype dataBPTTmp = fetchById(dataBPT_id, id, dataBPT);
 			if (dataBPTTmp.key == -1) {
@@ -333,9 +329,38 @@ int main()
 		case 5:
 			db.read();
 			break;
+		case 6:
+			if (conversion(data, 1, "Hello World", "via Wzl")) {
+				//get the key from dataBPT.size()
+				//key.auto-incresement=true
+				dataBPT_idTmp.id = 1;
+				dataBPT_idTmp.key = dataBPT.size();
+				dataBPT_id.push_back(dataBPT_idTmp);
+				dataBPT.push_back(db.insert(dataBPT.size(), data));
+			}
+			if (conversion(data, 2, "test", "test")) {
+				dataBPT_idTmp.id = 2;
+				dataBPT_idTmp.key = dataBPT.size();
+				dataBPT_id.push_back(dataBPT_idTmp);
+				dataBPT.push_back(db.insert(dataBPT.size(), data));
+			}
+			if (conversion(data, 3, "Hello World", "via Wmy")) {
+				dataBPT_idTmp.id = 3;
+				dataBPT_idTmp.key = dataBPT.size();
+				dataBPT_id.push_back(dataBPT_idTmp);
+				dataBPT.push_back(db.insert(dataBPT.size(), data));
+			}
+			if (conversion(data, 4, "I love you", "To shijia")) {
+				dataBPT_idTmp.id = 4;
+				dataBPT_idTmp.key = dataBPT.size();
+				dataBPT_id.push_back(dataBPT_idTmp);
+				dataBPT.push_back(db.insert(dataBPT.size(), data));
+			}
+		default:
+			break;
 		}
 		cout << "1 for insert 2 for modify 3 for remove 4 for flush 5 for read." << endl;
-		cout << "Input operation <<" << endl;
+		cout << "Input operation << ";
 		cin >> tmp;
 	}
 	getchar();
