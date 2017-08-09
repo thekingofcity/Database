@@ -35,10 +35,16 @@ struct dataBPTtype {
 	int indexPos;
 	int valuePos;
 };
+struct dataBPTtype_id {
+	unsigned int key;
+	unsigned int id;
+};
 
 class databaseIO {
 public:
-	databaseIO(string indexFileName, string valueFileName, string availableSpaceFileName);
+	//构造函数需要dataBPT和dataBPT_id的原因是多次插入bpt,不适宜做成返回值或数组
+	//dataBPT和dataBPT_id在此class应尽量不用 与bpt有关的操作都在外部完成
+	databaseIO(string indexFileName, string valueFileName, string availableSpaceFileName, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id);
 	~databaseIO();
 	void read();
 	void write();

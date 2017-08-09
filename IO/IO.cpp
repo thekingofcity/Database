@@ -2,9 +2,9 @@
 //
 
 #include "stdafx.h"
-vector<dataBPTtype> dataBPT;
 
-databaseIO::databaseIO(string indexFileName, string valueFileName, string availableSpaceFileName)
+
+databaseIO::databaseIO(string indexFileName, string valueFileName, string availableSpaceFileName, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id)
 {
 	indexFileStream.open(indexFileName, ios::binary | ios::in | ios::out | ios::trunc);
 	valueFileStream.open(valueFileName, ios::binary | ios::in | ios::out | ios::trunc);
@@ -14,26 +14,35 @@ databaseIO::databaseIO(string indexFileName, string valueFileName, string availa
 	//ios::trunc	Any contents that existed in the file before it is open are discarded.
 	//still need to be enhanced https://zhidao.baidu.com/question/146262844.html
 
-	//read from indexFile
-	unsigned int key;
+	//read from indexFile,valueFile to create b+tree
+	unsigned int key, id;
 	int p_int;
 	streampos p;
 	dataBPTtype dataBPTtypeTmp;
+	dataBPTtype_id dataBPTtype_idTmp;
 	while (indexFileStream.peek() != EOF) {
 		dataBPTtypeTmp.indexPos = indexFileStream.tellp();
 		indexFileStream.read((char *)(&key), UNINTSIZE);
 		indexFileStream.read((char *)(&p_int), INTSIZE);
 		//Here to add index to bpt.
 		//Something like (key indexPos valuePos).
-		dataBPTtypeTmp.key = key;
-		dataBPTtypeTmp.valuePos = p_int;
-		dataBPT.push_back(dataBPTtypeTmp);
 		if (key == -1 && p_int == -1) {
 			indexFileStream.seekg(-(UNINTSIZE + INTSIZE), ios::cur);
 			p = indexFileStream.tellp();
 			indexFileStream.seekg(2 * (UNINTSIZE + INTSIZE), ios::cur);
 			int p_int = p;
 			availableSpaceIndex.push_back(p_int);
+		}
+		else {
+			p = p_int;
+			valueFileStream.seekg(p, ios::beg);
+			valueFileStream.read((char *)(&id), UNINTSIZE);
+			dataBPTtype_idTmp.id = id;
+			dataBPTtype_idTmp.key = key;
+			dataBPT_id.push_back(dataBPTtype_idTmp);
+			dataBPTtypeTmp.key = key;
+			dataBPTtypeTmp.valuePos = p_int;
+			dataBPT.push_back(dataBPTtypeTmp);
 		}
 	}
 	indexFileStream.clear();//Just in case.
@@ -206,29 +215,56 @@ dataBPTtype fetch(vector<dataBPTtype> &dataBPT, unsigned int key) {
 	dataBPTtype return0 = { -1,-1,-1 };
 }
 
+dataBPTtype fetchById(vector<dataBPTtype_id> &dataBPT_id, unsigned int id, vector<dataBPTtype> &dataBPT) {
+	int i, j, key;
+	j = dataBPT_id.size();
+	for (i = 0; i < j; i++) {
+		if (dataBPT_id.at(i).id == id) {
+			return fetch(dataBPT, dataBPT_id.at(i).key);
+		}
+	}
+	dataBPTtype return0 = { -1,-1,-1 };
+}
+
 int main()
 {
+	vector<dataBPTtype> dataBPT;//b+tree key->indexPos,valuePos
+	vector<dataBPTtype_id> dataBPT_id;//b+tree id->key
 	string indexFileName = "C:/database/index.dat";
 	string valueFileName = "C:/database/value.dat";
 	string availableSpaceFileName = "C:/database/availableSpace.dat";
-	databaseIO db(indexFileName, valueFileName, availableSpaceFileName);
+	databaseIO db(indexFileName, valueFileName, availableSpaceFileName, dataBPT, dataBPT_id);
 	datatype data;
+	dataBPTtype_id dataBPT_idTmp;
 	if (conversion(data, 1, "Hello World", "via Wzl")) {
-		//dataBPT.size()获得即将添加的key
+		//get the key from dataBPT.size()
+		//key.auto-incresement=true
+		dataBPT_idTmp.id = 1;
+		dataBPT_idTmp.key = dataBPT.size();
+		dataBPT_id.push_back(dataBPT_idTmp);
 		dataBPT.push_back(db.insert(dataBPT.size(), data));
 	}
 	if (conversion(data, 2, "test", "test")) {
+		dataBPT_idTmp.id = 2;
+		dataBPT_idTmp.key = dataBPT.size();
+		dataBPT_id.push_back(dataBPT_idTmp);
 		dataBPT.push_back(db.insert(dataBPT.size(), data));
 	}
 	if (conversion(data, 3, "Hello World", "via Wmy")) {
+		dataBPT_idTmp.id = 3;
+		dataBPT_idTmp.key = dataBPT.size();
+		dataBPT_id.push_back(dataBPT_idTmp);
 		dataBPT.push_back(db.insert(dataBPT.size(), data));
 	}
 	if (conversion(data, 4, "I love you", "To shijia")) {
+		dataBPT_idTmp.id = 4;
+		dataBPT_idTmp.key = dataBPT.size();
+		dataBPT_id.push_back(dataBPT_idTmp);
 		dataBPT.push_back(db.insert(dataBPT.size(), data));
 	}
 	db.flush();
 	db.read();
-	sort(dataBPT.begin(), dataBPT.end(), sortByKey);
+	//sort(dataBPT.begin(), dataBPT.end(), sortByKey);
 	//if (conversion(data, 2, "HW", "shijia")) {
 	//	dataBPTtype dataBPTTmp = fetch(dataBPT, 1);
 	//	if (dataBPTTmp.key == -1) {
@@ -238,16 +274,70 @@ int main()
 	//		db.modify(dataBPTTmp, data);
 	//	}
 	//}
-	db.remove(fetch(dataBPT, 1));
-	db.remove(fetch(dataBPT, 2));
-	db.flush();
+	//db.remove(fetch(dataBPT, 1));
+	//db.remove(fetch(dataBPT, 2));
+	////db.flush();
+	////db.read();
+	//if (conversion(data, 2, "Hello World", "shijia")) {
+	//	//指定修改的key
+	//	dataBPT.push_back(db.insert(1, data));
+	//}
+	//db.flush();
 	//db.read();
-	if (conversion(data, 2, "HW", "shijia")) {
-		//指定修改的key
-		dataBPT.push_back(db.insert(1, data));
+	int tmp = 0, id = 0;
+	char data_[DATASIZE];
+	char remark[REMARKSIZE];
+	cout << "1 for insert 2 for modify 3 for remove 4 for flush 5 for read." << endl;
+	cout << "Input operation <<";
+	cin >> tmp;
+	while (tmp != 0) {
+		switch (tmp){
+		case 1:
+			cin >> id;
+			cin >> data_;
+			cin >> remark;
+			if (conversion(data, id, data_, remark)) {
+				dataBPT_idTmp.id = id;
+				dataBPT_idTmp.key = dataBPT.size();
+				dataBPT_id.push_back(dataBPT_idTmp);
+				db.insert(dataBPT.size(), data);
+			}
+			break;
+		case 2:
+			cin >> id;
+			cin >> data_;
+			cin >> remark;
+			if (conversion(data, id, data_, remark)) {
+				dataBPTtype dataBPTTmp = fetch(dataBPT, 1);
+				if (dataBPTTmp.key == -1) {
+					cout << "Can't find id." << endl;
+				}
+				else {
+					db.modify(dataBPTTmp, data);
+				}
+			}
+			break;
+		case 3:
+			cin >> id;
+			dataBPTtype dataBPTTmp = fetchById(dataBPT_id, id, dataBPT);
+			if (dataBPTTmp.key == -1) {
+				cout << "Can't find id." << endl;
+			}
+			else {
+				db.remove(dataBPTTmp);
+			}
+			break;
+		case 4:
+			db.flush();
+			break;
+		case 5:
+			db.read();
+			break;
+		}
+		cout << "1 for insert 2 for modify 3 for remove 4 for flush 5 for read." << endl;
+		cout << "Input operation <<" << endl;
+		cin >> tmp;
 	}
-	db.flush();
-	db.read();
 	getchar();
 	return 0;
 }
