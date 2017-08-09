@@ -213,7 +213,11 @@ dataBPTtype fetch(vector<dataBPTtype> &dataBPT, unsigned int key) {
 		if (dataBPT.at(i).key == key) {
 			dataBPTtype dataBPTtypeTmp = dataBPT.at(i);
 			dataBPT.erase(dataBPT.begin() + i - 1);
+			//erase form http://www.cplusplus.com/reference/vector/vector/erase/
 			return dataBPTtypeTmp;
+			//why not use iterator -> can't return iterator
+			//article below still can't fix it
+			//http://www.cnblogs.com/wang7/archive/2012/04/27/2474138.html
 		}
 	}
 	dataBPTtype return0 = { -1,-1,-1 };
@@ -222,6 +226,7 @@ dataBPTtype fetch(vector<dataBPTtype> &dataBPT, unsigned int key) {
 
 dataBPTtype fetchById(vector<dataBPTtype_id> &dataBPT_id, unsigned int id, vector<dataBPTtype> &dataBPT) {
 	int i, j, key;
+	//Method of iterator from http://blog.csdn.net/dgyanyong/article/details/21268469
 	vector<dataBPTtype_id>::iterator itor;
 	vector<dataBPTtype_id>::iterator itor2;
 	j = dataBPT_id.size();
