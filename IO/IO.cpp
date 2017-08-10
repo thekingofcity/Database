@@ -95,12 +95,12 @@ void databaseIO::read()
 	while (indexFileStream.peek() != EOF && valueFileStream.peek() != EOF) {
 		//the method whether file hits the end is from http://bbs.csdn.net/topics/210052379
 		indexFileStream.read((char *)(&key), UNINTSIZE);
-		//indexFileStream.read((char *)(&p), sizeof(streampos));
 		indexFileStream.read((char *)(&p_int), INTSIZE);
 		if (key != -1 && p_int != -1) {
 			p = p_int;
 			valueFileStream.seekp(p, ios::beg);
 			valueFileStream.read((char *)(&data), DATATYPESIZE);
+			cout << "key     =" << key << endl;
 			cout << "id      =" << data.id << endl;
 			cout << "data    =" << data.data << endl;
 			cout << "remark  =" << data.remark << endl;
@@ -255,30 +255,7 @@ int main()
 	databaseIO db(indexFileName, valueFileName, availableSpaceFileName, dataBPT, dataBPT_id);
 	datatype data;
 	dataBPTtype_id dataBPT_idTmp;
-
-	//db.flush();
-	//db.read();
-	//sort(dataBPT.begin(), dataBPT.end(), sortByKey);
-	//if (conversion(data, 2, "HW", "shijia")) {
-	//	dataBPTtype dataBPTTmp = fetch(dataBPT, 1);
-	//	if (dataBPTTmp.key == -1) {
-	//		cout << "Can't find id." << endl;
-	//	}
-	//	else {
-	//		db.modify(dataBPTTmp, data);
-	//	}
-	//}
-	//db.remove(fetch(dataBPT, 1));
-	//db.remove(fetch(dataBPT, 2));
-	////db.flush();
-	////db.read();
-	//if (conversion(data, 2, "Hello World", "shijia")) {
-	//	//指定修改的key
-	//	dataBPT.push_back(db.insert(1, data));
-	//}
-	//db.flush();
-	//db.read();
-	int tmp = 0, id = 0;
+	int tmp = 0, id = 0, key = 0;
 	char data_[DATASIZE];
 	char remark[REMARKSIZE];
 	cout << "1 for insert 2 for modify 3 for remove 4 for flush 5 for read." << endl;
@@ -287,6 +264,8 @@ int main()
 	while (tmp != 0) {
 		switch (tmp) {
 		case 1:
+			//get key after sort
+			//key.auto-incresement=true
 			cout << "Please input id." << endl;
 			cin >> id;
 			cout << "Please input data." << endl;
@@ -294,10 +273,12 @@ int main()
 			cout << "Please input remark." << endl;
 			scanf_s("%s", &remark, REMARKSIZE);
 			if (conversion(data, id, data_, remark)) {
+				sort(dataBPT.begin(), dataBPT.end(), sortByKey);
+				key = dataBPT.at(dataBPT.size() - 1).key + 1;
 				dataBPT_idTmp.id = id;
-				dataBPT_idTmp.key = dataBPT.size();
+				dataBPT_idTmp.key = key;
 				dataBPT_id.push_back(dataBPT_idTmp);
-				db.insert(dataBPT.size(), data);
+				dataBPT.push_back(db.insert(key, data));
 			}
 			break;
 		case 2:
@@ -336,8 +317,6 @@ int main()
 			break;
 		case 6:
 			if (conversion(data, 1, "Hello World", "via Wzl")) {
-				//get the key from dataBPT.size()
-				//key.auto-incresement=true
 				dataBPT_idTmp.id = 1;
 				dataBPT_idTmp.key = dataBPT.size();
 				dataBPT_id.push_back(dataBPT_idTmp);
@@ -361,6 +340,15 @@ int main()
 				dataBPT_id.push_back(dataBPT_idTmp);
 				dataBPT.push_back(db.insert(dataBPT.size(), data));
 			}
+			dataBPTTmp = fetchById(dataBPT_id, 2, dataBPT);
+			if (dataBPTTmp.key == -1) {
+				cout << "Can't find id." << endl;
+			}
+			else {
+				db.remove(dataBPTTmp);
+			}
+		case 7:
+			break;
 		default:
 			break;
 		}

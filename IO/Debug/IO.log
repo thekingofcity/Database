@@ -1,14 +1,14 @@
 ﻿  IO.cpp
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(26): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(32): warning C4146: 一元负运算符应用于无符号类型，结果仍为无符号类型
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(35): warning C4244: “初始化”: 从“std::streamoff”转换到“int”，可能丢失数据
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(130): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(131): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(138): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(144): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(154): warning C4244: “初始化”: 从“std::streamoff”转换到“int”，可能丢失数据
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(219): warning C4838: 从“int”转换到“unsigned int”需要收缩转换
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(239): warning C4838: 从“int”转换到“unsigned int”需要收缩转换
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(224): warning C4101: “i”: 未引用的局部变量
-  IO.vcxproj -> C:\Users\zl\documents\visual studio 2017\Projects\IO\Debug\IO.exe
-  IO.vcxproj -> C:\Users\zl\documents\visual studio 2017\Projects\IO\Debug\IO.pdb (Partial PDB)
+c:\users\16348\documents\visual studio 2017\projects\io\io\io.cpp(26): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\16348\documents\visual studio 2017\projects\io\io\io.cpp(32): warning C4146: 一元负运算符应用于无符号类型，结果仍为无符号类型
+c:\users\16348\documents\visual studio 2017\projects\io\io\io.cpp(35): warning C4244: “初始化”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\16348\documents\visual studio 2017\projects\io\io\io.cpp(130): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\16348\documents\visual studio 2017\projects\io\io\io.cpp(131): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\16348\documents\visual studio 2017\projects\io\io\io.cpp(138): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\16348\documents\visual studio 2017\projects\io\io\io.cpp(144): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\16348\documents\visual studio 2017\projects\io\io\io.cpp(154): warning C4244: “初始化”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\16348\documents\visual studio 2017\projects\io\io\io.cpp(223): warning C4838: 从“int”转换到“unsigned int”需要收缩转换
+c:\users\16348\documents\visual studio 2017\projects\io\io\io.cpp(244): warning C4838: 从“int”转换到“unsigned int”需要收缩转换
+c:\users\16348\documents\visual studio 2017\projects\io\io\io.cpp(228): warning C4101: “i”: 未引用的局部变量
+  IO.vcxproj -> C:\Users\16348\Documents\Visual Studio 2017\Projects\IO\Debug\IO.exe
+  IO.vcxproj -> C:\Users\16348\Documents\Visual Studio 2017\Projects\IO\Debug\IO.pdb (Partial PDB)
