@@ -14,7 +14,7 @@ databaseIO::databaseIO(string indexFileName, string valueFileName, string availa
 	if (!indexFileStream.is_open()) { indexFileStream.close(); indexFileStream.open(indexFileName, ios::binary | ios::in | ios::out | ios::trunc); }
 	if (!valueFileStream.is_open()) { valueFileStream.close(); valueFileStream.open(valueFileName, ios::binary | ios::in | ios::out | ios::trunc); }
 	//ios::trunc	Any contents that existed in the file before it is open are discarded.
-	//still need to be enhanced https://zhidao.baidu.com/question/146262844.html
+	//enhanced from https://zhidao.baidu.com/question/146262844.html
 
 	//read from indexFile,valueFile to create b+tree
 	unsigned int key, id;
@@ -254,6 +254,7 @@ int main()
 	string availableSpaceFileName = "C:/database/availableSpace.dat";
 	databaseIO db(indexFileName, valueFileName, availableSpaceFileName, dataBPT, dataBPT_id);
 	datatype data;
+	dataBPTtype dataBPTTmp;
 	dataBPTtype_id dataBPT_idTmp;
 	int tmp = 0, id = 0, key = 0;
 	char data_[DATASIZE];
@@ -267,41 +268,42 @@ int main()
 			//get key after sort
 			//key.auto-incresement=true
 			cout << "Please input id." << endl;
-			cin >> id;
+			cin >> data.id;
 			cout << "Please input data." << endl;
-			scanf_s("%s", &data_, DATASIZE);
+			scanf_s("%s", &data.data, DATASIZE);
 			cout << "Please input remark." << endl;
-			scanf_s("%s", &remark, REMARKSIZE);
-			if (conversion(data, id, data_, remark)) {
+			scanf_s("%s", &data.remark, REMARKSIZE);
+			if (dataBPT.size() == 0) {
+				key = 0;
+			}
+			else {
 				sort(dataBPT.begin(), dataBPT.end(), sortByKey);
 				key = dataBPT.at(dataBPT.size() - 1).key + 1;
-				dataBPT_idTmp.id = id;
-				dataBPT_idTmp.key = key;
-				dataBPT_id.push_back(dataBPT_idTmp);
-				dataBPT.push_back(db.insert(key, data));
 			}
+			dataBPT_idTmp.id = id;
+			dataBPT_idTmp.key = key;
+			dataBPT_id.push_back(dataBPT_idTmp);
+			dataBPT.push_back(db.insert(key, data));
 			break;
 		case 2:
 			cout << "Please input id." << endl;
-			cin >> id;
+			cin >> data.id;
 			cout << "Please input data." << endl;
-			scanf_s("%s", &data_, DATASIZE);
+			scanf_s("%s", &data.data, DATASIZE);
 			cout << "Please input remark." << endl;
-			scanf_s("%s", &remark, REMARKSIZE);
-			if (conversion(data, id, data_, remark)) {
-				dataBPTtype dataBPTTmp = fetchById(dataBPT_id, id, dataBPT);
-				if (dataBPTTmp.key == -1) {
-					cout << "Can't find id." << endl;
-				}
-				else {
-					db.modify(dataBPTTmp, data);
-				}
+			scanf_s("%s", &data.remark, REMARKSIZE);
+			dataBPTTmp = fetchById(dataBPT_id, id, dataBPT);
+			if (dataBPTTmp.key == -1) {
+				cout << "Can't find id." << endl;
+			}
+			else {
+				db.modify(dataBPTTmp, data);
 			}
 			break;
 		case 3:
 			cout << "Please input id." << endl;
 			cin >> id;
-			dataBPTtype dataBPTTmp = fetchById(dataBPT_id, id, dataBPT);
+			dataBPTTmp = fetchById(dataBPT_id, id, dataBPT);
 			if (dataBPTTmp.key == -1) {
 				cout << "Can't find id." << endl;
 			}
@@ -316,30 +318,43 @@ int main()
 			db.read();
 			break;
 		case 6:
-			if (conversion(data, 1, "Hello World", "via Wzl")) {
-				dataBPT_idTmp.id = 1;
-				dataBPT_idTmp.key = dataBPT.size();
-				dataBPT_id.push_back(dataBPT_idTmp);
-				dataBPT.push_back(db.insert(dataBPT.size(), data));
+			conversion(data, 1, "Hello World", "via Wzl");
+			if (dataBPT.size() == 0) {
+				key = 0;
 			}
-			if (conversion(data, 2, "test", "test")) {
-				dataBPT_idTmp.id = 2;
-				dataBPT_idTmp.key = dataBPT.size();
-				dataBPT_id.push_back(dataBPT_idTmp);
-				dataBPT.push_back(db.insert(dataBPT.size(), data));
+			else {
+				sort(dataBPT.begin(), dataBPT.end(), sortByKey);
+				key = dataBPT.at(dataBPT.size() - 1).key + 1;
 			}
-			if (conversion(data, 3, "Hello World", "via Wmy")) {
-				dataBPT_idTmp.id = 3;
-				dataBPT_idTmp.key = dataBPT.size();
-				dataBPT_id.push_back(dataBPT_idTmp);
-				dataBPT.push_back(db.insert(dataBPT.size(), data));
-			}
-			if (conversion(data, 4, "I love you", "To shijia")) {
-				dataBPT_idTmp.id = 4;
-				dataBPT_idTmp.key = dataBPT.size();
-				dataBPT_id.push_back(dataBPT_idTmp);
-				dataBPT.push_back(db.insert(dataBPT.size(), data));
-			}
+			dataBPT_idTmp.id = id;
+			dataBPT_idTmp.key = key;
+			dataBPT_id.push_back(dataBPT_idTmp);
+			dataBPT.push_back(db.insert(key, data));
+
+			conversion(data, 2, "test", "test");
+			sort(dataBPT.begin(), dataBPT.end(), sortByKey);
+			key = dataBPT.at(dataBPT.size() - 1).key + 1;
+			dataBPT_idTmp.id = id;
+			dataBPT_idTmp.key = key;
+			dataBPT_id.push_back(dataBPT_idTmp);
+			dataBPT.push_back(db.insert(key, data));
+
+			conversion(data, 3, "Hello World", "via Wmy");
+			sort(dataBPT.begin(), dataBPT.end(), sortByKey);
+			key = dataBPT.at(dataBPT.size() - 1).key + 1;
+			dataBPT_idTmp.id = id;
+			dataBPT_idTmp.key = key;
+			dataBPT_id.push_back(dataBPT_idTmp);
+			dataBPT.push_back(db.insert(key, data));
+
+			conversion(data, 4, "I love you", "To shijia");
+			sort(dataBPT.begin(), dataBPT.end(), sortByKey);
+			key = dataBPT.at(dataBPT.size() - 1).key + 1;
+			dataBPT_idTmp.id = id;
+			dataBPT_idTmp.key = key;
+			dataBPT_id.push_back(dataBPT_idTmp);
+			dataBPT.push_back(db.insert(key, data));
+
 			dataBPTTmp = fetchById(dataBPT_id, 2, dataBPT);
 			if (dataBPTTmp.key == -1) {
 				cout << "Can't find id." << endl;
