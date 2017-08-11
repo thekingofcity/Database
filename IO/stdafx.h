@@ -46,9 +46,10 @@ public:
 	//dataBPT和dataBPT_id在此class应尽量不用 与bpt有关的操作都在外部完成
 	databaseIO(string indexFileName, string valueFileName, string availableSpaceFileName, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id);
 	~databaseIO();
-	void read();
+	void readALL();
 	void write();
 	dataBPTtype insert(unsigned int key, datatype &data);
+	void get(dataBPTtype & pos, datatype &datatypeTm);
 	void remove(dataBPTtype &pos);
 	void modify(dataBPTtype &pos, datatype &data);
 	void flush();

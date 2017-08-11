@@ -28,12 +28,17 @@ databaseIO::databaseIO(string indexFileName, string valueFileName, string availa
 		indexFileStream.read((char *)(&p_int), INTSIZE);
 		//Here to add index to bpt.
 		//Something like (key indexPos valuePos).
-		if (key == -1 && p_int == -1) {
-			indexFileStream.seekg(-(UNINTSIZE + INTSIZE), ios::cur);
+		if (key == 4294967295 && p_int == -1) {
+			p = UNINTSIZE + INTSIZE;
+			indexFileStream.seekg(-p, ios::cur);
 			p = indexFileStream.tellp();
-			indexFileStream.seekg(2 * (UNINTSIZE + INTSIZE), ios::cur);
-			int p_int = p;
+			p_int = p;
 			availableSpaceIndex.push_back(p_int);
+			indexFileStream.seekg(p, ios::cur);
+			//p = indexFileStream.tellp();
+			//p_int = p;
+			//indexFileStream.clear();
+			//indexFileStream.seekg(p, ios::beg);
 		}
 		else {
 			p = p_int;
@@ -61,6 +66,7 @@ databaseIO::databaseIO(string indexFileName, string valueFileName, string availa
 
 databaseIO::~databaseIO()
 {
+	flush();
 	indexFileStream.close();
 	valueFileStream.close();
 	availableSpaceFileStream.open(availableSpaceFileName_, ios::binary | ios::in | ios::out | ios::trunc);
@@ -82,7 +88,7 @@ void databaseIO::write() {
 	indexFileStream.write((char *)(&num), sizeof(int));
 }
 
-void databaseIO::read()
+void databaseIO::readALL()
 {
 	indexFileStream.clear();
 	valueFileStream.clear();
@@ -146,6 +152,14 @@ dataBPTtype databaseIO::insert(unsigned int key, datatype &data)
 		indexFileStream.write((char *)(&p_int), INTSIZE);
 	}
 	return dataBPTTmp;
+}
+
+void databaseIO::get(dataBPTtype & pos, datatype &datatypeTmp)
+{
+	streampos p = pos.valuePos;
+	valueFileStream.clear();
+	valueFileStream.seekp(p, ios::beg);
+	valueFileStream.read((char *)(&datatypeTmp), DATATYPESIZE);
 }
 
 void databaseIO::remove(dataBPTtype &pos)
@@ -259,7 +273,7 @@ int main()
 	int tmp = 0, id = 0, key = 0;
 	char data_[DATASIZE];
 	char remark[REMARKSIZE];
-	cout << "1 for insert 2 for modify 3 for remove 4 for flush 5 for read." << endl;
+	cout << "1 for insert 2 for modify 3 for remove" << endl << "4 for flush 5 for read 6 for get." << endl;
 	cout << "Input operation << ";
 	cin >> tmp;
 	while (tmp != 0) {
@@ -280,7 +294,7 @@ int main()
 				sort(dataBPT.begin(), dataBPT.end(), sortByKey);
 				key = dataBPT.at(dataBPT.size() - 1).key + 1;
 			}
-			dataBPT_idTmp.id = id;
+			dataBPT_idTmp.id = data.id;
 			dataBPT_idTmp.key = key;
 			dataBPT_id.push_back(dataBPT_idTmp);
 			dataBPT.push_back(db.insert(key, data));
@@ -315,9 +329,25 @@ int main()
 			db.flush();
 			break;
 		case 5:
-			db.read();
+			db.readALL();
 			break;
 		case 6:
+			cout << "Please input id." << endl;
+			cin >> id;
+			dataBPTTmp = fetchById(dataBPT_id, id, dataBPT);
+			if (dataBPTTmp.key == -1) {
+				cout << "Can't find id." << endl;
+			}
+			else {
+				datatype datatypeTmp;
+				db.get(dataBPTTmp, datatypeTmp);
+				cout << "key     =" << dataBPTTmp.key << endl;
+				cout << "id      =" << datatypeTmp.id << endl;
+				cout << "data    =" << datatypeTmp.data << endl;
+				cout << "remark  =" << datatypeTmp.remark << endl;
+			}
+			break;
+		case 7:
 			conversion(data, 1, "Hello World", "via Wzl");
 			if (dataBPT.size() == 0) {
 				key = 0;
@@ -326,7 +356,7 @@ int main()
 				sort(dataBPT.begin(), dataBPT.end(), sortByKey);
 				key = dataBPT.at(dataBPT.size() - 1).key + 1;
 			}
-			dataBPT_idTmp.id = id;
+			dataBPT_idTmp.id = 1;
 			dataBPT_idTmp.key = key;
 			dataBPT_id.push_back(dataBPT_idTmp);
 			dataBPT.push_back(db.insert(key, data));
@@ -334,7 +364,7 @@ int main()
 			conversion(data, 2, "test", "test");
 			sort(dataBPT.begin(), dataBPT.end(), sortByKey);
 			key = dataBPT.at(dataBPT.size() - 1).key + 1;
-			dataBPT_idTmp.id = id;
+			dataBPT_idTmp.id = 2;
 			dataBPT_idTmp.key = key;
 			dataBPT_id.push_back(dataBPT_idTmp);
 			dataBPT.push_back(db.insert(key, data));
@@ -342,7 +372,7 @@ int main()
 			conversion(data, 3, "Hello World", "via Wmy");
 			sort(dataBPT.begin(), dataBPT.end(), sortByKey);
 			key = dataBPT.at(dataBPT.size() - 1).key + 1;
-			dataBPT_idTmp.id = id;
+			dataBPT_idTmp.id = 3;
 			dataBPT_idTmp.key = key;
 			dataBPT_id.push_back(dataBPT_idTmp);
 			dataBPT.push_back(db.insert(key, data));
@@ -350,7 +380,7 @@ int main()
 			conversion(data, 4, "I love you", "To shijia");
 			sort(dataBPT.begin(), dataBPT.end(), sortByKey);
 			key = dataBPT.at(dataBPT.size() - 1).key + 1;
-			dataBPT_idTmp.id = id;
+			dataBPT_idTmp.id = 4;
 			dataBPT_idTmp.key = key;
 			dataBPT_id.push_back(dataBPT_idTmp);
 			dataBPT.push_back(db.insert(key, data));
@@ -362,12 +392,10 @@ int main()
 			else {
 				db.remove(dataBPTTmp);
 			}
-		case 7:
-			break;
 		default:
 			break;
 		}
-		cout << "1 for insert 2 for modify 3 for remove 4 for flush 5 for read." << endl;
+		cout << "1 for insert 2 for modify 3 for remove" << endl << "4 for flush 5 for read 6 for get." << endl;
 		cout << "Input operation << ";
 		cin >> tmp;
 	}
