@@ -6,7 +6,9 @@
 #pragma once
 
 #include "targetver.h"
+#include "time.h"//test unit
 
+#include <random>//test unit
 #include <stdio.h>
 #include <tchar.h>
 #include <string>

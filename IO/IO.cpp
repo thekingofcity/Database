@@ -13,6 +13,7 @@ databaseIO::databaseIO(string indexFileName, string valueFileName, string availa
 	valueFileStream.open(valueFileName, ios::binary | ios::in | ios::out);
 	if (!indexFileStream.is_open()) { indexFileStream.close(); indexFileStream.open(indexFileName, ios::binary | ios::in | ios::out | ios::trunc); }
 	if (!valueFileStream.is_open()) { valueFileStream.close(); valueFileStream.open(valueFileName, ios::binary | ios::in | ios::out | ios::trunc); }
+	if (!availableSpaceFileStream.is_open()) { availableSpaceFileStream.close(); availableSpaceFileStream.open(valueFileName, ios::binary | ios::in | ios::out | ios::trunc); }
 	//ios::trunc	Any contents that existed in the file before it is open are discarded.
 	//enhanced from https://zhidao.baidu.com/question/146262844.html
 
@@ -261,6 +262,7 @@ dataBPTtype fetchById(vector<dataBPTtype_id> &dataBPT_id, unsigned int id, vecto
 
 int main()
 {
+	char s[27] = "abcdefghijklmnopqrstuvwxyz";
 	vector<dataBPTtype> dataBPT;//b+tree key->indexPos,valuePos
 	vector<dataBPTtype_id> dataBPT_id;//b+tree id->key
 	string indexFileName = "C:/database/index.dat";
@@ -392,6 +394,36 @@ int main()
 			else {
 				db.remove(dataBPTTmp);
 			}
+		case 8:
+			time_t start, end;
+			double tC;
+			start = clock();
+			for (int i = 1; i < 200; i++) {
+				data.id = i;
+				data.data[0] = s[rand() % 26];
+				data.data[1] = s[rand() % 26];
+				data.data[2] = s[rand() % 26];
+				data.data[3] = s[rand() % 26];
+				data.data[4] = '\0';
+				data.remark[0] = s[rand() % 26];
+				data.remark[1] = s[rand() % 26];
+				data.remark[2] = '\0';
+				if (dataBPT.size() == 0) {
+					key = 0;
+				}
+				else {
+					sort(dataBPT.begin(), dataBPT.end(), sortByKey);
+					key = dataBPT.at(dataBPT.size() - 1).key + 1;
+				}
+				dataBPT_idTmp.id = data.id;
+				dataBPT_idTmp.key = key;
+				dataBPT_id.push_back(dataBPT_idTmp);
+				dataBPT.push_back(db.insert(key, data));
+			}
+			end = clock();
+			tC = double(end - start) / CLOCKS_PER_SEC;
+			cout << tC;
+			break;
 		default:
 			break;
 		}
