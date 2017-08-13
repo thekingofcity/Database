@@ -1,15 +1,25 @@
 ﻿  IO.cpp
 c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(27): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
 c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(36): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(137): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(138): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(145): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(151): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(169): warning C4244: “初始化”: 从“std::streamoff”转换到“int”，可能丢失数据
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(238): warning C4838: 从“int”转换到“unsigned int”需要收缩转换
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(259): warning C4838: 从“int”转换到“unsigned int”需要收缩转换
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(243): warning C4101: “i”: 未引用的局部变量
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(276): warning C4101: “data_”: 未引用的局部变量
-c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(277): warning C4101: “remark”: 未引用的局部变量
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(113): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(122): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(204): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(205): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(212): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(218): warning C4244: “=”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(236): warning C4244: “初始化”: 从“std::streamoff”转换到“int”，可能丢失数据
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(305): warning C4838: 从“int”转换到“unsigned int”需要收缩转换
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(326): warning C4838: 从“int”转换到“unsigned int”需要收缩转换
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(310): warning C4101: “i”: 未引用的局部变量
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(399): warning C4996: 'localtime': This function or variable may be unsafe. Consider using localtime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.15063.0\ucrt\time.h(505): note: 参见“localtime”的声明
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(406): warning C4996: 'localtime': This function or variable may be unsafe. Consider using localtime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.15063.0\ucrt\time.h(505): note: 参见“localtime”的声明
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(389): warning C4101: “standard”: 未引用的局部变量
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(443): warning C4996: 'localtime': This function or variable may be unsafe. Consider using localtime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.15063.0\ucrt\time.h(505): note: 参见“localtime”的声明
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(450): warning C4996: 'localtime': This function or variable may be unsafe. Consider using localtime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.15063.0\ucrt\time.h(505): note: 参见“localtime”的声明
+c:\users\zl\documents\visual studio 2017\projects\io\io\io.cpp(433): warning C4101: “standard”: 未引用的局部变量
   IO.vcxproj -> C:\Users\zl\documents\visual studio 2017\Projects\IO\Debug\IO.exe
   IO.vcxproj -> C:\Users\zl\documents\visual studio 2017\Projects\IO\Debug\IO.pdb (Partial PDB)

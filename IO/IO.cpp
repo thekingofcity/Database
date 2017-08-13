@@ -35,11 +35,8 @@ databaseIO::databaseIO(string indexFileName, string valueFileName, string availa
 			p = indexFileStream.tellp();
 			p_int = p;
 			availableSpaceIndex.push_back(p_int);
+			p = UNINTSIZE + INTSIZE;//fix the first index was -1 then indexFileStream.seekg(-p, ios::cur) goes wrong.
 			indexFileStream.seekg(p, ios::cur);
-			//p = indexFileStream.tellp();
-			//p_int = p;
-			//indexFileStream.clear();
-			//indexFileStream.seekg(p, ios::beg);
 		}
 		else {
 			p = p_int;
@@ -80,6 +77,76 @@ databaseIO::~databaseIO()
 	availableSpaceFileStream.close();
 }
 
+void databaseIO::reopen(string indexFileName, string valueFileName, string availableSpaceFileName, vector<dataBPTtype>& dataBPT, vector<dataBPTtype_id>& dataBPT_id)
+{
+	flush();
+	indexFileStream.close();
+	valueFileStream.close();
+	availableSpaceFileStream.open(availableSpaceFileName_, ios::binary | ios::in | ios::out | ios::trunc);
+	int availableSpaceTmp, i, j;
+	j = availableSpace.size();
+	for (i = 0; i < j; i++) {
+		availableSpaceTmp = availableSpace.at(availableSpace.size() - 1);
+		availableSpaceFileStream.write((char *)(&availableSpaceTmp), INTSIZE);
+	}
+	availableSpaceFileStream.close();
+
+
+	//indexFileStream.open(indexFileName, ios::binary | ios::in | ios::out | ios::trunc);
+	//valueFileStream.open(valueFileName, ios::binary | ios::in | ios::out | ios::trunc);
+	availableSpaceFileStream.open(availableSpaceFileName, ios::binary | ios::in | ios::out);
+	indexFileStream.open(indexFileName, ios::binary | ios::in | ios::out);
+	valueFileStream.open(valueFileName, ios::binary | ios::in | ios::out);
+	if (!indexFileStream.is_open()) { indexFileStream.close(); indexFileStream.open(indexFileName, ios::binary | ios::in | ios::out | ios::trunc); }
+	if (!valueFileStream.is_open()) { valueFileStream.close(); valueFileStream.open(valueFileName, ios::binary | ios::in | ios::out | ios::trunc); }
+	if (!availableSpaceFileStream.is_open()) { availableSpaceFileStream.close(); availableSpaceFileStream.open(valueFileName, ios::binary | ios::in | ios::out | ios::trunc); }
+	//ios::trunc	Any contents that existed in the file before it is open are discarded.
+	//enhanced from https://zhidao.baidu.com/question/146262844.html
+
+	//read from indexFile,valueFile to create b+tree
+	unsigned int key, id;
+	int p_int;
+	streampos p;
+	dataBPTtype dataBPTtypeTmp;
+	dataBPTtype_id dataBPTtype_idTmp;
+	while (indexFileStream.peek() != EOF) {
+		dataBPTtypeTmp.indexPos = indexFileStream.tellp();
+		indexFileStream.read((char *)(&key), UNINTSIZE);
+		indexFileStream.read((char *)(&p_int), INTSIZE);
+		//Here to add index to bpt.
+		//Something like (key indexPos valuePos).
+		if (key == 4294967295 && p_int == -1) {
+			p = UNINTSIZE + INTSIZE;
+			indexFileStream.seekg(-p, ios::cur);
+			p = indexFileStream.tellp();
+			p_int = p;
+			availableSpaceIndex.push_back(p_int);
+			p = UNINTSIZE + INTSIZE;//fix the first index was -1 then indexFileStream.seekg(-p, ios::cur) goes wrong.
+			indexFileStream.seekg(p, ios::cur);
+		}
+		else {
+			p = p_int;
+			valueFileStream.seekg(p, ios::beg);
+			valueFileStream.read((char *)(&id), UNINTSIZE);
+			dataBPTtype_idTmp.id = id;
+			dataBPTtype_idTmp.key = key;
+			dataBPT_id.push_back(dataBPTtype_idTmp);
+			dataBPTtypeTmp.key = key;
+			dataBPTtypeTmp.valuePos = p_int;
+			dataBPT.push_back(dataBPTtypeTmp);
+		}
+	}
+	indexFileStream.clear();//Just in case.
+
+							//create availableSpace table for valueFile
+	availableSpaceFileName_ = availableSpaceFileName;
+	while (availableSpaceFileStream.peek() != EOF) {
+		availableSpaceFileStream.read((char *)(&availableSpaceTmp), INTSIZE);
+		availableSpace.push_back(availableSpaceTmp);
+	}
+	availableSpaceFileStream.close();
+}
+
 void databaseIO::write() {
 	int num = 30;
 	indexFileStream.write((char *)(&num), sizeof(int));
@@ -107,10 +174,10 @@ void databaseIO::readALL()
 			p = p_int;
 			valueFileStream.seekp(p, ios::beg);
 			valueFileStream.read((char *)(&data), DATATYPESIZE);
-			cout << "key     =" << key << endl;
-			cout << "id      =" << data.id << endl;
-			cout << "data    =" << data.data << endl;
-			cout << "remark  =" << data.remark << endl;
+			printf_s("key     =%3u\n", key);
+			printf_s("id      =%3u\n", data.id);
+			printf_s("data    =%s\n", data.data);
+			printf_s("remark  =%s\n", data.remark);
 		}
 	}
 	cout << "That's the end of value.dat" << endl;
@@ -227,7 +294,7 @@ dataBPTtype fetch(vector<dataBPTtype> &dataBPT, unsigned int key) {
 	for (i = 0; i < j; i++) {
 		if (dataBPT.at(i).key == key) {
 			dataBPTtype dataBPTtypeTmp = dataBPT.at(i);
-			dataBPT.erase(dataBPT.begin() + i - 1);
+			dataBPT.erase(dataBPT.begin() + i);
 			//erase form http://www.cplusplus.com/reference/vector/vector/erase/
 			return dataBPTtypeTmp;
 			//why not use iterator -> can't return iterator
@@ -260,21 +327,148 @@ dataBPTtype fetchById(vector<dataBPTtype_id> &dataBPT_id, unsigned int id, vecto
 	return return0;
 }
 
+void insert(datatype &data, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id, databaseIO &db) {
+	int key;
+	dataBPTtype_id dataBPT_idTmp;
+	if (dataBPT.size() == 0) {
+		key = 0;
+	}
+	else {
+		sort(dataBPT.begin(), dataBPT.end(), sortByKey);
+		key = dataBPT.at(dataBPT.size() - 1).key + 1;
+	}
+	dataBPT_idTmp.id = data.id;
+	dataBPT_idTmp.key = key;
+	dataBPT_id.push_back(dataBPT_idTmp);
+	dataBPT.push_back(db.insert(key, data));
+}
+
+void modify(datatype &data, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id, databaseIO &db) {
+	dataBPTtype dataBPTTmp = fetchById(dataBPT_id, data.id, dataBPT);
+	if (dataBPTTmp.key == -1) {
+		printf_s("Can't find id=%3d.\n", data.id);
+	}
+	else {
+		db.modify(dataBPTTmp, data);
+		printf_s("Successfully modified id=%3d from database.\n", data.id);
+	}
+}
+
+void remove(int id, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id, databaseIO &db) {
+	dataBPTtype dataBPTTmp = fetchById(dataBPT_id, id, dataBPT);
+	if (dataBPTTmp.key == -1) {
+		printf_s("Can't find id=%d.\n",id);
+	}
+	else {
+		db.remove(dataBPTTmp);
+		printf_s("Successfully removed id=%d from database.\n",id);
+	}
+}
+
+void get(int id, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id, databaseIO &db) {
+	dataBPTtype dataBPTTmp = fetchById(dataBPT_id, id, dataBPT);
+	if (dataBPTTmp.key == -1) {
+		printf_s("Can't find id.\n");
+	}
+	else {
+		datatype datatypeTmp;
+		db.get(dataBPTTmp, datatypeTmp);
+		printf_s("key     =%3u\n", dataBPTTmp.key);
+		printf_s("id      =%3u\n", datatypeTmp.id);
+		printf_s("data    =%s\n", datatypeTmp.data);
+		printf_s("remark  =%s\n", datatypeTmp.remark);
+	}
+}
+
+void reopen(vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id, databaseIO &db) {
+	//Time from http://blog.csdn.net/wangqing_12345/article/details/52092728
+	int stampTime = 0;
+	time_t tick = (time_t)stampTime;
+	struct tm tm;
+	char s[100];
+	Times standard;
+	//Traverse the folder from http://www.cnblogs.com/fnlingnzb-learner/p/6424563.html
+	const char *to_search = "C:\\database\\*.index";        //欲查找的文件，支持通配符
+
+	long handle;                                    //用于查找的句柄
+	struct _finddata_t fileinfo;                    //文件信息的结构体
+	handle = _findfirst(to_search, &fileinfo);      //第一次查找
+	if (-1 == handle) return;
+	printf_s("%s   ", fileinfo.name);				//打印出找到的文件的文件名
+	tick = fileinfo.time_access;
+	tm = *localtime(&tick);
+	strftime(s, sizeof(s), "%Y-%m-%d %H:%M:%S", &tm);
+	printf("Last modified on: %s\n", s);
+	while (!_findnext(handle, &fileinfo));			//循环查找其他符合的文件，直到找不到其他的为止
+	{
+		printf_s("%s   ", fileinfo.name);
+		tick = fileinfo.time_access;
+		tm = *localtime(&tick);
+		strftime(s, sizeof(s), "%Y-%m-%d %H:%M:%S", &tm);
+		printf("Last modified on: %s\n", s);
+	}
+	_findclose(handle);                              //别忘了关闭句柄
+
+	char table[40];
+	printf_s("Input the table name: "); scanf_s("%s", &table, 40);
+	string root = "C:/database/";
+	int strsize = root.size();
+	string indexFileName = root.append(table); indexFileName.append(".index"); root.erase(strsize);
+	string valueFileName = root.append(table); valueFileName.append(".value"); root.erase(strsize);
+	string availableSpaceFileName = root.append(table); availableSpaceFileName.append(".space");
+	db.reopen(indexFileName, valueFileName, availableSpaceFileName, dataBPT, dataBPT_id);
+	printf_s("table %s selected successfully.\n", table);
+}
+
 int main()
 {
-	char s[27] = "abcdefghijklmnopqrstuvwxyz";
 	vector<dataBPTtype> dataBPT;//b+tree key->indexPos,valuePos
 	vector<dataBPTtype_id> dataBPT_id;//b+tree id->key
-	string indexFileName = "C:/database/index.dat";
-	string valueFileName = "C:/database/value.dat";
-	string availableSpaceFileName = "C:/database/availableSpace.dat";
-	databaseIO db(indexFileName, valueFileName, availableSpaceFileName, dataBPT, dataBPT_id);
+
+	//Time from http://blog.csdn.net/wangqing_12345/article/details/52092728
+	int stampTime = 0;
+	time_t tick = (time_t)stampTime;
+	struct tm tm;
+	char timestr[100];
+	Times standard;
+	//Traverse the folder from http://www.cnblogs.com/fnlingnzb-learner/p/6424563.html
+	const char *to_search = "C:\\database\\*.index";        //欲查找的文件，支持通配符
+
+	long handle;                                    //用于查找的句柄
+	struct _finddata_t fileinfo;                    //文件信息的结构体
+	handle = _findfirst(to_search, &fileinfo);      //第一次查找
+	if (-1 == handle) return -1;
+	printf_s("%s   ", fileinfo.name);				//打印出找到的文件的文件名
+	tick = fileinfo.time_access;
+	tm = *localtime(&tick);
+	strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", &tm);
+	printf("Last modified on: %s\n", timestr);
+	while (!_findnext(handle, &fileinfo));			//循环查找其他符合的文件，直到找不到其他的为止
+	{
+		printf_s("%s   ", fileinfo.name);
+		tick = fileinfo.time_access;
+		tm = *localtime(&tick);
+		strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", &tm);
+		printf("Last modified on: %s\n", timestr);
+	}
+	_findclose(handle);                              //别忘了关闭句柄
+
+	char table[40];
+	printf_s("Input the table name: "); scanf_s("%s", &table, 40);
+	string root = "C:/database/";
+	int strsize = root.size();
+	string indexFileName = root.append(table); indexFileName.append(".index"); root.erase(strsize);
+	string valueFileName = root.append(table); valueFileName.append(".value"); root.erase(strsize);
+	string availableSpaceFileName = root.append(table); availableSpaceFileName.append(".space");
+	//databaseIO db(indexFileName, valueFileName, availableSpaceFileName, dataBPT, dataBPT_id);
+	class databaseIO *db = new databaseIO(indexFileName, valueFileName, availableSpaceFileName, dataBPT, dataBPT_id);
+	printf_s("table %s selected successfully.\n",table);
+
+	char s[27] = "abcdefghijklmnopqrstuvwxyz";
 	datatype data;
-	dataBPTtype dataBPTTmp;
-	dataBPTtype_id dataBPT_idTmp;
-	int tmp = 0, id = 0, key = 0;
-	char data_[DATASIZE];
-	char remark[REMARKSIZE];
+	time_t start, end;
+	double tC;
+	int tmp = 0, id = 0;
 	cout << "1 for insert 2 for modify 3 for remove" << endl << "4 for flush 5 for read 6 for get." << endl;
 	cout << "Input operation << ";
 	cin >> tmp;
@@ -289,17 +483,7 @@ int main()
 			scanf_s("%s", &data.data, DATASIZE);
 			cout << "Please input remark." << endl;
 			scanf_s("%s", &data.remark, REMARKSIZE);
-			if (dataBPT.size() == 0) {
-				key = 0;
-			}
-			else {
-				sort(dataBPT.begin(), dataBPT.end(), sortByKey);
-				key = dataBPT.at(dataBPT.size() - 1).key + 1;
-			}
-			dataBPT_idTmp.id = data.id;
-			dataBPT_idTmp.key = key;
-			dataBPT_id.push_back(dataBPT_idTmp);
-			dataBPT.push_back(db.insert(key, data));
+			insert(data, dataBPT, dataBPT_id, *db);
 			break;
 		case 2:
 			cout << "Please input id." << endl;
@@ -308,95 +492,25 @@ int main()
 			scanf_s("%s", &data.data, DATASIZE);
 			cout << "Please input remark." << endl;
 			scanf_s("%s", &data.remark, REMARKSIZE);
-			dataBPTTmp = fetchById(dataBPT_id, id, dataBPT);
-			if (dataBPTTmp.key == -1) {
-				cout << "Can't find id." << endl;
-			}
-			else {
-				db.modify(dataBPTTmp, data);
-			}
+			modify(data, dataBPT, dataBPT_id, *db);
 			break;
 		case 3:
 			cout << "Please input id." << endl;
 			cin >> id;
-			dataBPTTmp = fetchById(dataBPT_id, id, dataBPT);
-			if (dataBPTTmp.key == -1) {
-				cout << "Can't find id." << endl;
-			}
-			else {
-				db.remove(dataBPTTmp);
-			}
+			remove(id, dataBPT, dataBPT_id, *db);
 			break;
 		case 4:
-			db.flush();
+			db->flush();
 			break;
 		case 5:
-			db.readALL();
+			db->readALL();
 			break;
 		case 6:
 			cout << "Please input id." << endl;
 			cin >> id;
-			dataBPTTmp = fetchById(dataBPT_id, id, dataBPT);
-			if (dataBPTTmp.key == -1) {
-				cout << "Can't find id." << endl;
-			}
-			else {
-				datatype datatypeTmp;
-				db.get(dataBPTTmp, datatypeTmp);
-				cout << "key     =" << dataBPTTmp.key << endl;
-				cout << "id      =" << datatypeTmp.id << endl;
-				cout << "data    =" << datatypeTmp.data << endl;
-				cout << "remark  =" << datatypeTmp.remark << endl;
-			}
+			get(id, dataBPT, dataBPT_id, *db);
 			break;
 		case 7:
-			conversion(data, 1, "Hello World", "via Wzl");
-			if (dataBPT.size() == 0) {
-				key = 0;
-			}
-			else {
-				sort(dataBPT.begin(), dataBPT.end(), sortByKey);
-				key = dataBPT.at(dataBPT.size() - 1).key + 1;
-			}
-			dataBPT_idTmp.id = 1;
-			dataBPT_idTmp.key = key;
-			dataBPT_id.push_back(dataBPT_idTmp);
-			dataBPT.push_back(db.insert(key, data));
-
-			conversion(data, 2, "test", "test");
-			sort(dataBPT.begin(), dataBPT.end(), sortByKey);
-			key = dataBPT.at(dataBPT.size() - 1).key + 1;
-			dataBPT_idTmp.id = 2;
-			dataBPT_idTmp.key = key;
-			dataBPT_id.push_back(dataBPT_idTmp);
-			dataBPT.push_back(db.insert(key, data));
-
-			conversion(data, 3, "Hello World", "via Wmy");
-			sort(dataBPT.begin(), dataBPT.end(), sortByKey);
-			key = dataBPT.at(dataBPT.size() - 1).key + 1;
-			dataBPT_idTmp.id = 3;
-			dataBPT_idTmp.key = key;
-			dataBPT_id.push_back(dataBPT_idTmp);
-			dataBPT.push_back(db.insert(key, data));
-
-			conversion(data, 4, "I love you", "To shijia");
-			sort(dataBPT.begin(), dataBPT.end(), sortByKey);
-			key = dataBPT.at(dataBPT.size() - 1).key + 1;
-			dataBPT_idTmp.id = 4;
-			dataBPT_idTmp.key = key;
-			dataBPT_id.push_back(dataBPT_idTmp);
-			dataBPT.push_back(db.insert(key, data));
-
-			dataBPTTmp = fetchById(dataBPT_id, 2, dataBPT);
-			if (dataBPTTmp.key == -1) {
-				cout << "Can't find id." << endl;
-			}
-			else {
-				db.remove(dataBPTTmp);
-			}
-		case 8:
-			time_t start, end;
-			double tC;
 			start = clock();
 			for (int i = 1; i < 200; i++) {
 				data.id = i;
@@ -408,23 +522,28 @@ int main()
 				data.remark[0] = s[rand() % 26];
 				data.remark[1] = s[rand() % 26];
 				data.remark[2] = '\0';
-				if (dataBPT.size() == 0) {
-					key = 0;
-				}
-				else {
-					sort(dataBPT.begin(), dataBPT.end(), sortByKey);
-					key = dataBPT.at(dataBPT.size() - 1).key + 1;
-				}
-				dataBPT_idTmp.id = data.id;
-				dataBPT_idTmp.key = key;
-				dataBPT_id.push_back(dataBPT_idTmp);
-				dataBPT.push_back(db.insert(key, data));
+				insert(data, dataBPT, dataBPT_id, *db);
 			}
 			end = clock();
 			tC = double(end - start) / CLOCKS_PER_SEC;
-			cout << tC;
+			printf_s("Command completed in %fs.\n", tC);
 			break;
+		case 8:
+			start = clock();
+			for (int i = 1; i < 20; i++) {
+				id = rand() % 20;
+				remove(id, dataBPT, dataBPT_id, *db);
+			}
+			end = clock();
+			tC = double(end - start) / CLOCKS_PER_SEC;
+			printf_s("Command completed in %lf s.\n", tC);
+		case 9:
+		{
+			reopen(dataBPT, dataBPT_id, *db);
+			break;
+		}
 		default:
+			printf_s("Syntax error.\n");
 			break;
 		}
 		cout << "1 for insert 2 for modify 3 for remove" << endl << "4 for flush 5 for read 6 for get." << endl;
@@ -432,6 +551,7 @@ int main()
 		cin >> tmp;
 	}
 	getchar();
+	delete db;
 	return 0;
 }
 

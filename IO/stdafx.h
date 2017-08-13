@@ -11,6 +11,7 @@
 #include <random>//test unit
 #include <stdio.h>
 #include <tchar.h>
+#include <io.h>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -48,6 +49,7 @@ public:
 	//dataBPT和dataBPT_id在此class应尽量不用 与bpt有关的操作都在外部完成
 	databaseIO(string indexFileName, string valueFileName, string availableSpaceFileName, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id);
 	~databaseIO();
+	void reopen(string indexFileName, string valueFileName, string availableSpaceFileName, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id);
 	void readALL();
 	void write();
 	dataBPTtype insert(unsigned int key, datatype &data);
@@ -66,5 +68,14 @@ private:
 	//剩余时候都在vector<int> availableSpace中更新
 };
 
+typedef struct times
+{
+	int Year;
+	int Mon;
+	int Day;
+	int Hour;
+	int Min;
+	int Second;
+}Times;
 
 // TODO: 在此处引用程序需要的其他头文件
