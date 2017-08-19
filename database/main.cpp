@@ -9,9 +9,10 @@ int main()
 	vector<dataBPTtype> dataBPT;//b+tree key->indexPos,valuePos
 	vector<dataBPTtype_id> dataBPT_id;//b+tree id->key
 
-	cout << "Input the path of database(add \ at the end pls):" << endl;
+	//cout << "Input the path of database(add \\ at the end pls):" << endl;
 	string databasePath;
-	cin >> databasePath;
+	//cin >> databasePath;
+	databasePath = "C:\\database\\";
 	database DB(databasePath);
 
 	char s[27] = "abcdefghijklmnopqrstuvwxyz";
@@ -33,7 +34,8 @@ int main()
 			scanf_s("%s", &data.data, DATASIZE);
 			cout << "Please input remark." << endl;
 			scanf_s("%s", &data.remark, REMARKSIZE);
-			DB.insert(data, dataBPT, dataBPT_id);
+			//DB.insert(data, dataBPT, dataBPT_id);
+			DB.insert(data);
 			break;
 		case 2:
 			cout << "Please input id." << endl;
@@ -62,7 +64,7 @@ int main()
 			break;
 		case 7:
 			start = clock();
-			for (int i = 1; i < 200; i++) {
+			for (int i = 1; i < 40; i++) {
 				data.id = i;
 				data.data[0] = s[rand() % 26];
 				data.data[1] = s[rand() % 26];
@@ -72,17 +74,20 @@ int main()
 				data.remark[0] = s[rand() % 26];
 				data.remark[1] = s[rand() % 26];
 				data.remark[2] = '\0';
-				DB.insert(data, dataBPT, dataBPT_id);
+				//DB.insert(data, dataBPT, dataBPT_id);
+				DB.insert(data);
 			}
 			end = clock();
 			tC = double(end - start) / CLOCKS_PER_SEC;
 			printf_s("Command completed in %fs.\n", tC);
 			break;
 		case 8:
+			int key;
 			start = clock();
 			for (int i = 1; i < 20; i++) {
-				id = rand() % 20;
-				DB.remove(id, dataBPT, dataBPT_id);
+				key = rand() % 20;
+				//DB.remove(id, dataBPT, dataBPT_id);
+				DB.remove(key);
 			}
 			end = clock();
 			tC = double(end - start) / CLOCKS_PER_SEC;

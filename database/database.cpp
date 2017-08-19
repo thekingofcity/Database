@@ -73,13 +73,16 @@ database::database(string databasePath)
 	string valueFileName = databasePath.append(table); valueFileName.append(".value"); databasePath.erase(strsize);
 	string availableSpaceFileName = databasePath.append(table); availableSpaceFileName.append(".space");
 
-	db = new databaseIO(indexFileName, valueFileName, availableSpaceFileName, dataBPT, dataBPT_id);
+	bpt = new BPlusTree();
+	//db = new databaseIO(indexFileName, valueFileName, availableSpaceFileName, dataBPT, dataBPT_id);
+	db = new databaseIO(indexFileName, valueFileName, availableSpaceFileName, bpt, cache_insert, cache_remove);
 	printf_s("table %s selected successfully.\n", table);
 
 }
 
 database::~database()
 {
+	delete bpt;
 	delete db;
 }
 
@@ -102,11 +105,10 @@ dataBPTtype database::fetch(vector<dataBPTtype> &dataBPT, unsigned int key) {
 }
 
 dataBPTtype database::fetchById(vector<dataBPTtype_id> &dataBPT_id, unsigned int id, vector<dataBPTtype> &dataBPT) {
-	int i, j, key;
+	int key;
 	//Method of iterator from http://blog.csdn.net/dgyanyong/article/details/21268469
 	vector<dataBPTtype_id>::iterator itor;
 	vector<dataBPTtype_id>::iterator itor2;
-	j = dataBPT_id.size();
 	for (itor = dataBPT_id.begin(); itor != dataBPT_id.end();) {
 		if (itor->id == id) {
 			key = itor->key;
@@ -138,6 +140,28 @@ void database::insert(datatype &data, vector<dataBPTtype> &dataBPT, vector<dataB
 	dataBPT.push_back(db->insert(key, data));
 }
 
+void database::insert(datatype &data)
+{//All the datas can be duplicated.
+	//cache_insert.push_back(data);
+	//if (cache_insert.size() > CACHESIZE) {
+	//	insert_update();
+	//}
+	int key = bpt->maxKey();
+	bpt->insert(key, db->insert(key, data));
+}
+
+void database::insert_update()
+{
+	int key, i, j = cache_insert.size();
+	datatype datatypeTmp;
+	for (i = 0; i < j; i++) {
+		key = bpt->maxKey();
+		datatypeTmp = cache_insert.at(i);
+		bpt->insert(key, db->insert(key, datatypeTmp));
+	}
+	cache_insert.clear();
+}
+
 void database::modify(datatype &data, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id) {
 	dataBPTtype dataBPTTmp = fetchById(dataBPT_id, data.id, dataBPT);
 	if (dataBPTTmp.key == -1) {
@@ -158,6 +182,24 @@ void database::remove(int id, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_i
 		db->remove(dataBPTTmp);
 		printf_s("Successfully removed id=%d from database.\n", id);
 	}
+}
+
+void database::remove(unsigned int key)
+{
+	dataBPTtype dataBPTTmp;
+	if (bpt->search0(key, dataBPTTmp)) {
+		bpt->remove(key);
+		db->remove(dataBPTTmp);
+		printf_s("Successfully removed key=%d from database.\n", key);
+	}
+	else {
+		printf_s("Can't find key=%d.\n", key);
+	}
+}
+
+void database::remove_update()
+{
+
 }
 
 void database::get(int id, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id) {
@@ -214,6 +256,12 @@ void database::reopen(string databasePath) {
 	string availableSpaceFileName = databasePath.append(table); availableSpaceFileName.append(".space");
 	db->reopen(indexFileName, valueFileName, availableSpaceFileName, dataBPT, dataBPT_id);
 	printf_s("table %s selected successfully.\n", table);
+}
+
+void database::flush()
+{
+	insert_update();
+	db->flush();
 }
 
 

@@ -20,7 +20,7 @@
 #define UNINTSIZE sizeof(unsigned int)
 #define DATATYPESIZE sizeof(datatype)
 
-#define CACHESIZE 10
+#define CACHESIZE 1
 
 using namespace std;
 struct datatype {

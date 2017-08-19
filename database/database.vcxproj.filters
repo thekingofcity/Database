@@ -24,16 +24,16 @@
     <ClInclude Include="targetver.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\IO\IO\bpn.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\IO\IO\bpt.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="databaseIO.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="database.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="bpt.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="bpn.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -44,16 +44,16 @@
     <ClCompile Include="database.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\IO\IO\bpn.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\IO\IO\bpt.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="databaseIO.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="bpt.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="bpn.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
