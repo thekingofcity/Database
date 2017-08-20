@@ -64,8 +64,8 @@ int main()
 			break;
 		case 7:
 			start = clock();
-			for (int i = 1; i < 40; i++) {
-				data.id = i;
+			for (int i = 1; i < 10; i++) {
+				data.id = rand() % 3 + 1;
 				data.data[0] = s[rand() % 26];
 				data.data[1] = s[rand() % 26];
 				data.data[2] = s[rand() % 26];
@@ -84,11 +84,12 @@ int main()
 		case 8:
 			int key;
 			start = clock();
-			for (int i = 1; i < 20; i++) {
-				key = rand() % 20;
-				//DB.remove(id, dataBPT, dataBPT_id);
-				DB.remove(key);
-			}
+			//for (int i = 1; i < 20; i++) {
+			//	key = rand() % 20;
+			//	//DB.remove(id, dataBPT, dataBPT_id);
+			//	DB.remove(key);
+			//}
+			DB.get(3);
 			end = clock();
 			tC = double(end - start) / CLOCKS_PER_SEC;
 			printf_s("Command completed in %lf s.\n", tC);

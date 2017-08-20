@@ -207,36 +207,36 @@ bool BPlusTree::search0(KeyType key, dataBPTtype &data) {
 }
 
 bool BPlusTree::recursive_search0(BPTNode * pNode, KeyType key, dataBPTtype &data) {
-	//int keyIndex = pNode->getKeyIndex(key);
-	//int childIndex = pNode->getChildIndex(key, keyIndex);
-	//if (pNode->getType() == LEAF) {
-	//	((BPTLeafNode*)pNode)->getData(keyIndex, data);
-	//	return true;
-	//}
-	//else {
-	//	return recursive_search0(((BPTInternalNode*)pNode)->getChild(childIndex), key, data);
-	//}
-	if (pNode == nullptr) {//检测节点指针是否为空，或该节点是否为叶子节点
-		return false;
+	int keyIndex = pNode->getKeyIndex(key);
+	int childIndex = pNode->getChildIndex(key, keyIndex);
+	if (pNode->getType() == LEAF) {
+		((BPTLeafNode*)pNode)->getData(keyIndex, data);
+		return true;
 	}
 	else {
-		int keyIndex = pNode->getKeyIndex(key);
-		int childIndex = pNode->getChildIndex(key, keyIndex);// 孩子结点指针索引  
-		if (keyIndex < pNode->getKeyNum() && key == pNode->getKeyValue(keyIndex))
-		{
-			((BPTLeafNode*)pNode)->getData(keyIndex, data);
-			return true;
-		}
-		else {
-			if (pNode->getType() == LEAF)  //检查该节点是否为叶子节点  
-			{
-				return false;
-			}
-			else {
-				return recursive_search(((BPTInternalNode*)pNode)->getChild(childIndex), key);
-			}
-		}
+		return recursive_search0(((BPTInternalNode*)pNode)->getChild(childIndex), key, data);
 	}
+	//if (pNode == nullptr) {//检测节点指针是否为空，或该节点是否为叶子节点
+	//	return false;
+	//}
+	//else {
+	//	int keyIndex = pNode->getKeyIndex(key);
+	//	int childIndex = pNode->getChildIndex(key, keyIndex);// 孩子结点指针索引  
+	//	if (keyIndex < pNode->getKeyNum() && key == pNode->getKeyValue(keyIndex))
+	//	{
+	//		((BPTLeafNode*)pNode)->getData(keyIndex, data);
+	//		return true;
+	//	}
+	//	else {
+	//		if (pNode->getType() == LEAF)  //检查该节点是否为叶子节点  
+	//		{
+	//			return false;
+	//		}
+	//		else {
+	//			return recursive_search0(((BPTInternalNode*)pNode)->getChild(childIndex), key, data);
+	//		}
+	//	}
+	//}
 }
 
 

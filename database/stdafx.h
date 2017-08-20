@@ -1,6 +1,6 @@
-// stdafx.h : ��׼ϵͳ�����ļ��İ����ļ���
-// ���Ǿ���ʹ�õ��������ĵ�
-// �ض�����Ŀ�İ����ļ�
+﻿// stdafx.h : 标准系统包含文件的包含文件，
+// 或是经常使用但不常更改的
+// 特定于项目的包含文件
 //
 
 #pragma once
@@ -19,8 +19,6 @@
 #define INTSIZE sizeof(int)
 #define UNINTSIZE sizeof(unsigned int)
 #define DATATYPESIZE sizeof(datatype)
-
-#define CACHESIZE 1
 
 using namespace std;
 struct datatype {
@@ -41,5 +39,15 @@ struct dataBPTtype_id {
 	unsigned int id;
 };
 
+enum NODE_TYPE { INTERNAL, LEAF };            // 结点类型：内结点、叶子结点  
+enum SIBLING_DIRECTION { LEFT, RIGHT };    // 兄弟结点方向：左兄弟结点、右兄弟结点  
 
-// TODO: �ڴ˴����ó�����Ҫ������ͷ�ļ�
+const int ORDER = 4;        // B+树的阶（非根内结点的最小子树个数）  
+const int MINNUM_KEY = ORDER - 1;       // 最小键值个数  
+const int MAXNUM_KEY = 2 * ORDER - 1;// 最大键值个数  
+const int MINNUM_CHILD = MINNUM_KEY + 1;//最小子树个数  
+const int MAXNUM_CHILD = MAXNUM_KEY + 1;//最大子树个数  
+const int MINNUM_LEAF = MINNUM_KEY;// 最小叶子结点键值个数  
+const int MAXNUM_LEAF = MAXNUM_KEY;// 最大叶子结点键值个数  
+
+// TODO: 在此处引用程序需要的其他头文件

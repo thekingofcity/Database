@@ -2,6 +2,7 @@
 
 #include "stdafx.h"
 #include "bpt.h"
+#include "bpt+.h"
 using namespace std;
 
 class databaseIO {
@@ -12,10 +13,8 @@ public:
 		vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id
 		);
 	databaseIO(string indexFileName, string valueFileName, string availableSpaceFileName,
-		BPlusTree *bpt, vector<datatype> cache_insert, vector<unsigned int> cache_remove
-	);
+		BPlusTree *bpt, BPlusTreePlus *bpt_id);
 	~databaseIO();
-	void reopen(string indexFileName, string valueFileName, string availableSpaceFileName, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id);
 	void readALL();
 	dataBPTtype insert(unsigned int key, datatype &data);
 	void get(dataBPTtype & pos, datatype &datatypeTm);

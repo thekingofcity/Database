@@ -36,6 +36,12 @@
     <ClInclude Include="bpn.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="bpt+.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="bpn+.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -54,6 +60,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="bpn.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="bpn+.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="bpt+.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
