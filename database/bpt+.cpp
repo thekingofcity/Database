@@ -198,7 +198,7 @@ bool BPlusTreePlus::remove(KeyType key)
 	return true;
 }
 
-bool BPlusTreePlus::remove0(KeyType key, KeyType uniqueKey)
+bool BPlusTreePlus::remove(KeyType key, KeyType uniqueKey)
 {
 	if (!search(key))  //不存在  
 	{

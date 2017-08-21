@@ -58,7 +58,9 @@ databaseIO::databaseIO(string indexFileName, string valueFileName, string availa
 	availableSpaceFileStream.close();
 }
 
-databaseIO::databaseIO(string indexFileName, string valueFileName, string availableSpaceFileName, BPlusTree * bpt, BPlusTreePlus *bpt_id)
+databaseIO::databaseIO(
+	string indexFileName, string valueFileName, string availableSpaceFileName,
+	BPlusTree * bpt, BPlusTreePlus *bpt_id, BPlusTreePlus *bpt_data)
 {
 	availableSpaceFileStream.open(availableSpaceFileName, ios::binary | ios::in | ios::out);
 	indexFileStream.open(indexFileName, ios::binary | ios::in | ios::out);
@@ -71,6 +73,7 @@ databaseIO::databaseIO(string indexFileName, string valueFileName, string availa
 
 	//read from indexFile,valueFile to create b+tree
 	unsigned int key, id;
+	char data[DATASIZE];
 	int p_int;
 	streampos p;
 	dataBPTtype dataBPTtypeTmp;
@@ -93,15 +96,20 @@ databaseIO::databaseIO(string indexFileName, string valueFileName, string availa
 		else {
 			p = p_int;
 			valueFileStream.seekg(p, ios::beg);
+			//id->key
 			valueFileStream.read((char *)(&id), UNINTSIZE);
 			indexBPTtypeTmp.id = id;
 			indexBPTtypeTmp.key = key;
+			indexBPTtypeTmp.next = NULL;
 			bpt_id->insert(id, indexBPTtypeTmp);
+			valueFileStream.read((char *)(&data), DATASIZE);
+			//data->key
+			indexBPTtypeTmp.id = bkdr_hash(data);
+			bpt_data->insert(indexBPTtypeTmp.id, indexBPTtypeTmp);
+			//key->address in file
 			dataBPTtypeTmp.key = key;
 			dataBPTtypeTmp.valuePos = p_int;
 			bpt->insert(key, dataBPTtypeTmp);
-
-
 		}
 	}
 
@@ -140,6 +148,8 @@ void databaseIO::readALL()
 	unsigned int key;
 	int p_int;
 	streampos p;
+	printf_s("=============================================\n");
+	printf_s("|   key    |    id    |   data   |  remark  |\n");
 	while (indexFileStream.peek() != EOF && valueFileStream.peek() != EOF) {
 		//the method whether file hits the end is from http://bbs.csdn.net/topics/210052379
 		indexFileStream.read((char *)(&key), UNINTSIZE);
@@ -148,14 +158,14 @@ void databaseIO::readALL()
 			p = p_int;
 			valueFileStream.seekp(p, ios::beg);
 			valueFileStream.read((char *)(&data), DATATYPESIZE);
-			printf_s("key     =%3u\n", key);
-			printf_s("id      =%3u\n", data.id);
-			printf_s("data    =%s\n", data.data);
-			printf_s("remark  =%s\n", data.remark);
+			printf_s("|%10u", key);
+			printf_s("|%10u", data.id);
+			printf_s("|%10s", data.data);
+			printf_s("|%10s|\n", data.remark);
 		}
 	}
-	cout << "That's the end of value.dat" << endl;
-	cout << endl;
+	printf_s("|   key    |    id    |   data   |  remark  |\n");
+	printf_s("=============================================\n");
 }
 
 dataBPTtype databaseIO::insert(unsigned int key, datatype &data)

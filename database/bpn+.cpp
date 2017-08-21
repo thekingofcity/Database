@@ -243,7 +243,7 @@ bool BPTLeafNodePlus::removeKey(int keyIndex, int childIndex, KeyType uniqueKey)
 		indexBPTtype *next = &Datas[i];
 		indexBPTtype *last = next;
 		while (next->next != nullptr) {
-			if (next->key = uniqueKey) {
+			if (next->key == uniqueKey) {
 				last->next = next->next;
 				delete next;
 				return false;

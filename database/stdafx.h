@@ -39,6 +39,9 @@ struct dataBPTtype_id {
 	unsigned int id;
 };
 
+unsigned int bkdr_hash(const char* key);
+
+
 enum NODE_TYPE { INTERNAL, LEAF };            // 结点类型：内结点、叶子结点  
 enum SIBLING_DIRECTION { LEFT, RIGHT };    // 兄弟结点方向：左兄弟结点、右兄弟结点  
 

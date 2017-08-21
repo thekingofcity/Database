@@ -11,7 +11,7 @@ public:
 	bool insert(KeyType key, const indexBPTtype &data);
 	bool insert0(KeyType key, const indexBPTtype &data);
 	bool remove(KeyType key);
-	bool remove0(KeyType key, KeyType uniqueKey);
+	bool remove(KeyType key, KeyType uniqueKey);
 	bool search(KeyType key); // 查找是否存在  
 	bool search0(KeyType key, vector<indexBPTtype> &datas);
 	KeyType maxKey() { return MaxKey + 1; }

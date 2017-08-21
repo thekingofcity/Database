@@ -42,14 +42,17 @@ database::database(string databasePath)
 
 	bpt = new BPlusTree();
 	bpt_id = new BPlusTreePlus();
+	bpt_data = new BPlusTreePlus();
 	//db = new databaseIO(indexFileName, valueFileName, availableSpaceFileName, dataBPT, dataBPT_id);
-	db = new databaseIO(indexFileName, valueFileName, availableSpaceFileName, bpt, bpt_id);
+	db = new databaseIO(indexFileName, valueFileName, availableSpaceFileName, bpt, bpt_id, bpt_data);
 	printf_s("table %s selected successfully.\n", table);
 
 }
 
 database::~database()
 {
+	delete bpt_data;
+	delete bpt_id;
 	delete bpt;
 	delete db;
 }
@@ -112,10 +115,15 @@ void database::insert(datatype &data)
 {//All the datas can be duplicated.
 	int key = bpt->maxKey();
 	indexBPTtype indexBPTtypeTmp;
-	indexBPTtypeTmp.id = data.id;
 	indexBPTtypeTmp.key = key;
 	indexBPTtypeTmp.next = NULL;
+	//id->key
+	indexBPTtypeTmp.id = data.id;
 	bpt_id->insert(data.id, indexBPTtypeTmp);
+	//data->key
+	indexBPTtypeTmp.id = bkdr_hash(data.data);
+	bpt_data->insert(indexBPTtypeTmp.id, indexBPTtypeTmp);
+	//key->address in file
 	bpt->insert(key, db->insert(key, data));
 }
 
@@ -128,6 +136,34 @@ void database::modify(datatype &data, vector<dataBPTtype> &dataBPT, vector<dataB
 		db->modify(dataBPTTmp, data);
 		printf_s("Successfully modified id=%3d from database.\n", data.id);
 	}
+}
+
+void database::modify(datatype & data, unsigned int key)
+{
+	dataBPTtype dataBPTTmp;
+	if (bpt->search(key) && bpt->search0(key, dataBPTTmp)) {//this line could be simplified
+		//boring stuff to update bpt_id.
+		datatype datatypeTmp;
+		indexBPTtype indexBPTtypeTmp;
+		db->get(dataBPTTmp, datatypeTmp);
+		bpt_id->remove(datatypeTmp.id, key);
+		indexBPTtypeTmp.id = data.id;
+		indexBPTtypeTmp.key = key;
+		indexBPTtypeTmp.next = NULL;
+		bpt_id->insert0(key, indexBPTtypeTmp);
+		//boring stuff to update bpt_data.
+		db->get(dataBPTTmp, datatypeTmp);
+		bpt_id->remove(datatypeTmp.id, key);
+		indexBPTtypeTmp.id = bkdr_hash(data.data);
+		bpt_id->insert0(key, indexBPTtypeTmp);
+		//Here's how to update files.
+		db->modify(dataBPTTmp, data);
+		printf_s("Successfully modified key=%d from database.\n", key);
+	}
+	else {
+		printf_s("Can't find key=%d.\n", key);
+	}
+
 }
 
 void database::remove(int id, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id) {
@@ -143,8 +179,21 @@ void database::remove(int id, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_i
 
 void database::remove(unsigned int key)
 {
+	//printf_s("Input the key you want to delete: ");
+	//scanf_s("%d", &uniqueKey);
 	dataBPTtype dataBPTTmp;
-	if (bpt->search(key) && bpt->search0(key, dataBPTTmp)) {
+	if (bpt->search(key) && bpt->search0(key, dataBPTTmp)) {//this line could be simplified
+		//boring stuff to remove key in bpt_id.
+		datatype datatypeTmp;
+		//indexBPTtype indexBPTtypeTmp;
+		unsigned int id;
+		db->get(dataBPTTmp, datatypeTmp);
+		id = datatypeTmp.id;
+		bpt_id->remove(id, key);
+		//boring stuff to remove key in bpt_data.
+		id = bkdr_hash(datatypeTmp.data);
+		bpt_id->remove(id, key);
+		//Here's how to update bpt and files.
 		bpt->remove(key);
 		db->remove(dataBPTTmp);
 		printf_s("Successfully removed key=%d from database.\n", key);
@@ -156,6 +205,8 @@ void database::remove(unsigned int key)
 
 void database::listTable(string databasePath)
 {
+	printf_s("===================================================\n");
+	printf_s("|   file name |    Last modified    |   file size |\n");
 	int strsize = databasePath.size();
 	//Time from http://blog.csdn.net/wangqing_12345/article/details/52092728
 	int stampTime = 0;
@@ -167,7 +218,6 @@ void database::listTable(string databasePath)
 	string toSearch = databasePath.append("*.index"); databasePath.erase(strsize);
 	//const char *to_search = "C:\\database\\*.index";        //欲查找的文件，支持通配符
 	const char *to_search = toSearch.c_str();        //欲查找的文件，支持通配符
-
 	long handle;                                    //用于查找的句柄
 	struct _finddata_t fileinfo;                    //文件信息的结构体
 	handle = _findfirst(to_search, &fileinfo);      //第一次查找
@@ -175,21 +225,19 @@ void database::listTable(string databasePath)
 
 	}
 	else {
-		printf_s("%s   ", fileinfo.name);				//打印出找到的文件的文件名
-		tick = fileinfo.time_access;
-		tm = *localtime(&tick);
-		strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", &tm);
-		printf("Last modified on: %s\n", timestr);
 		while (!_findnext(handle, &fileinfo));			//循环查找其他符合的文件，直到找不到其他的为止
 		{
-			printf_s("%s   ", fileinfo.name);
+			printf_s("|%12s ", fileinfo.name);			//打印出找到的文件的文件名
 			tick = fileinfo.time_access;
 			tm = *localtime(&tick);
 			strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", &tm);
-			printf("Last modified on: %s\n", timestr);
+			printf("|%21s", timestr);
+			printf("|%12u |\n", fileinfo.size);
 		}
 		_findclose(handle);                              //别忘了关闭句柄
 	}
+	printf_s("|   file name |    Last modified    |   file size |\n");
+	printf_s("===================================================\n");
 }
 
 void database::get(int id, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id) {
@@ -207,17 +255,61 @@ void database::get(int id, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> 
 	}
 }
 
-void database::get(int id)
+void database::get(unsigned int id)
 {
-	vector<indexBPTtype> datas;
-	bpt_id->search0(id, datas);
-	int key;
-	//Method of iterator from http://blog.csdn.net/dgyanyong/article/details/21268469
-	vector<indexBPTtype>::iterator itor;
-	for (itor = datas.begin(); itor != datas.end(); itor++) {
-		printf_s("key     =%3u\n", itor->key);
-		printf_s("id      =%3u\n", itor->id);
+	printf_s("result from search id=%d\n", id);
+	printf_s("=============================================\n");
+	printf_s("|   key    |    id    |   data   |  remark  |\n");
+	if (bpt_id->search(id)) {
+		vector<indexBPTtype> datas;
+		dataBPTtype dataBPTTmp;
+		datatype datatypeTmp;
+		bpt_id->search0(id, datas);
+		//Method of iterator from http://blog.csdn.net/dgyanyong/article/details/21268469
+		vector<indexBPTtype>::iterator itor;
+		for (itor = datas.begin(); itor != datas.end(); itor++) {
+			printf_s("|%10u", itor->key);
+			bpt->search0(itor->key, dataBPTTmp);
+			db->get(dataBPTTmp, datatypeTmp);
+			printf_s("|%10u", datatypeTmp.id);
+			printf_s("|%10s", datatypeTmp.data);
+			printf_s("|%10s|\n", datatypeTmp.remark);
+		}
 	}
+	else {
+		printf_s("   Can't find id.\n   ");
+	}
+	printf_s("|   key    |    id    |   data   |  remark  |\n");
+	printf_s("=============================================\n");
+}
+
+void database::get(char * data)
+{
+	printf_s("result from search data=%s\n", data);
+	printf_s("=============================================\n");
+	printf_s("|   key    |    id    |   data   |  remark  |\n");
+	unsigned int id = bkdr_hash(data);
+	if (bpt_data->search(id)) {
+		vector<indexBPTtype> datas;
+		dataBPTtype dataBPTTmp;
+		datatype datatypeTmp;
+		bpt_data->search0(id, datas);
+		//Method of iterator from http://blog.csdn.net/dgyanyong/article/details/21268469
+		vector<indexBPTtype>::iterator itor;
+		for (itor = datas.begin(); itor != datas.end(); itor++) {
+			printf_s("|%10u", itor->key);
+			bpt->search0(itor->key, dataBPTTmp);
+			db->get(dataBPTTmp, datatypeTmp);
+			printf_s("|%10u", datatypeTmp.id);
+			printf_s("|%10s", datatypeTmp.data);
+			printf_s("|%10s|\n", datatypeTmp.remark);
+		}
+	}
+	else {
+		printf_s("   Can't find data.\n   ");
+	}
+	printf_s("|   key    |    id    |   data   |  remark  |\n");
+	printf_s("=============================================\n");
 }
 
 void database::reopen(string databasePath) {
@@ -229,11 +321,13 @@ void database::reopen(string databasePath) {
 	string valueFileName = databasePath.append(table); valueFileName.append(".value"); databasePath.erase(strsize);
 	string availableSpaceFileName = databasePath.append(table); availableSpaceFileName.append(".space");
 	//db->reopen(indexFileName, valueFileName, availableSpaceFileName, dataBPT, dataBPT_id);
-	delete bpt;
+	delete bpt_data;
 	delete bpt_id;
+	delete bpt;
 	delete db;
 	bpt = new BPlusTree();
 	bpt_id = new BPlusTreePlus();
-	db = new databaseIO(indexFileName, valueFileName, availableSpaceFileName, bpt, bpt_id);
+	bpt_data = new BPlusTreePlus();
+	db = new databaseIO(indexFileName, valueFileName, availableSpaceFileName, bpt, bpt_id, bpt_data);
 	printf_s("table %s selected successfully.\n", table);
 }

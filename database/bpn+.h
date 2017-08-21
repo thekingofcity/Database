@@ -4,7 +4,7 @@
 
 typedef unsigned int KeyType;                    // 键类型  
 struct indexBPTtype {
-	unsigned int id;
+	unsigned int id;//or the hash from string
 	unsigned int key;
 	indexBPTtype * next;
 };
@@ -83,4 +83,3 @@ private:
 	BPTLeafNodePlus *RightSibling;
 	indexBPTtype Datas[MAXNUM_LEAF];
 };
-

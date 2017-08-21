@@ -13,11 +13,11 @@ public:
 		vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id
 		);
 	databaseIO(string indexFileName, string valueFileName, string availableSpaceFileName,
-		BPlusTree *bpt, BPlusTreePlus *bpt_id);
+		BPlusTree *bpt, BPlusTreePlus *bpt_id, BPlusTreePlus *bpt_data);
 	~databaseIO();
 	void readALL();
 	dataBPTtype insert(unsigned int key, datatype &data);
-	void get(dataBPTtype & pos, datatype &datatypeTm);
+	void get(dataBPTtype & pos, datatype &datatypeTmp);
 	void remove(dataBPTtype &pos);
 	void modify(dataBPTtype &pos, datatype &data);
 	void flush();

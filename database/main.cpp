@@ -4,12 +4,26 @@
 #include "time.h"
 #include <random>//test unit
 
+unsigned int bkdr_hash(const char* key)
+{
+	//bkdr_hash from http://blog.csdn.net/wanglx_/article/details/40400693
+	char* str = const_cast<char*>(key);
+
+	unsigned int seed = 31; // 31 131 1313 13131 131313 etc.. 37  
+	unsigned int hash = 0;
+	while (*str)
+	{
+		hash = hash * seed + (*str++);
+	}
+	return hash;
+}
+
 int main()
 {
 	vector<dataBPTtype> dataBPT;//b+tree key->indexPos,valuePos
 	vector<dataBPTtype_id> dataBPT_id;//b+tree id->key
 
-	//cout << "Input the path of database(add \\ at the end pls):" << endl;
+	//cout << "Input the path of database(like C:\\database\\):" << endl;
 	string databasePath;
 	//cin >> databasePath;
 	databasePath = "C:\\database\\";
@@ -19,6 +33,8 @@ int main()
 	datatype data;
 	time_t start, end;
 	double tC;
+	char searchTmp[DATASIZE];
+	unsigned int key;
 	int tmp = 0, id = 0;
 	cout << "1 for insert 2 for modify 3 for remove" << endl << "4 for flush 5 for read 6 for get." << endl;
 	cout << "Input operation << ";
@@ -40,16 +56,27 @@ int main()
 		case 2:
 			cout << "Please input id." << endl;
 			cin >> data.id;
+			DB.get(data.id);
+			cout << "Please input key." << endl;
+			cin >> key;
 			cout << "Please input data." << endl;
 			scanf_s("%s", &data.data, DATASIZE);
 			cout << "Please input remark." << endl;
 			scanf_s("%s", &data.remark, REMARKSIZE);
-			DB.modify(data, dataBPT, dataBPT_id);
+			//DB.modify(data, dataBPT, dataBPT_id);
+			DB.modify(data, key);
 			break;
 		case 3:
-			cout << "Please input id." << endl;
-			cin >> id;
-			DB.remove(id, dataBPT, dataBPT_id);
+			//cout << "Please input id." << endl;
+			//cin >> id;
+			//DB.get(id);
+			cout << "Please input data." << endl;
+			cin >> searchTmp;
+			DB.get(searchTmp);
+			cout << "Please input key to remove." << endl;
+			cin >> key;
+			//DB.remove(id, dataBPT, dataBPT_id);
+			DB.remove(key);
 			break;
 		case 4:
 			DB.flush();
@@ -84,19 +111,22 @@ int main()
 		case 8:
 			int key;
 			start = clock();
-			//for (int i = 1; i < 20; i++) {
-			//	key = rand() % 20;
-			//	//DB.remove(id, dataBPT, dataBPT_id);
-			//	DB.remove(key);
+			for (int i = 1; i < 20; i++) {
+				key = rand() % 20;
+				//DB.remove(id, dataBPT, dataBPT_id);
+				DB.remove(key);
+			}
+			//for (int i = 1; i < 4; i++) {
+			//	DB.get(i);
+			//	cout << endl;
 			//}
-			DB.get(3);
 			end = clock();
 			tC = double(end - start) / CLOCKS_PER_SEC;
 			printf_s("Command completed in %lf s.\n", tC);
 			break;
 		case 9:
 		{
-			cout << "Input the path of database(add \ at the end pls):" << endl;
+			cout << "Input the path of database(like C:\\database\\):" << endl;
 			string databasePath;
 			cin >> databasePath;
 			DB.reopen(databasePath);
