@@ -242,15 +242,24 @@ bool BPTLeafNodePlus::removeKey(int keyIndex, int childIndex, KeyType uniqueKey)
 	else {
 		indexBPTtype *next = &Datas[i];
 		indexBPTtype *last = next;
-		while (next->next != nullptr) {
-			if (next->key == uniqueKey) {
-				last->next = next->next;
-				delete next;
-				return false;
-			}
-			else {
-				last = next;
-				next = next->next;
+		if (next->key == uniqueKey) {
+			indexBPTtype *del = next->next;
+			next->key = del->key;
+			next->id = del->id;
+			next->next = del->next;
+			delete del;
+		}
+		else {
+			while (next->next != nullptr) {
+				if (next->key == uniqueKey) {
+					last->next = next->next;
+					delete next;
+					return false;
+				}
+				else {
+					last = next;
+					next = next->next;
+				}
 			}
 		}
 		return false;
@@ -291,6 +300,7 @@ void BPTLeafNodePlus::getData(int i, indexBPTtype &data)
 {
 	data.id = Datas[i].id;
 	data.key = Datas[i].key;
+	data.next = Datas[i].next;
 }
 
 void BPTLeafNodePlus::getData0(int i, vector<indexBPTtype> &datas)

@@ -70,9 +70,9 @@ int main()
 			//cout << "Please input id." << endl;
 			//cin >> id;
 			//DB.get(id);
-			cout << "Please input data." << endl;
-			cin >> searchTmp;
-			DB.get(searchTmp);
+			//cout << "Please input data." << endl;
+			//cin >> searchTmp;
+			//DB.get(searchTmp);
 			cout << "Please input key to remove." << endl;
 			cin >> key;
 			//DB.remove(id, dataBPT, dataBPT_id);
@@ -126,11 +126,26 @@ int main()
 			break;
 		case 9:
 		{
-			cout << "Input the path of database(like C:\\database\\):" << endl;
+			cout << "Input the path of database(like C:\\database\\): ";
 			string databasePath;
 			cin >> databasePath;
 			DB.reopen(databasePath);
 			break;
+		}
+		case 10:
+		{
+			getchar();
+			string command;
+			cout << "Input the Command: ";
+			getline(cin, command);
+			if (DB.execute(command)) {
+				printf_s("Command complete sucessfully.\n");
+			}
+			else {
+				printf_s("Syntax error.\n");
+			}
+			break;
+			//select * where id=3 or data=xfir
 		}
 		default:
 			printf_s("Syntax error.\n");

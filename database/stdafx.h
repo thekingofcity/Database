@@ -39,7 +39,7 @@ struct dataBPTtype_id {
 	unsigned int id;
 };
 
-unsigned int bkdr_hash(const char* key);
+unsigned int bkdr_hash(const char* key);//String hash function
 
 
 enum NODE_TYPE { INTERNAL, LEAF };            // 结点类型：内结点、叶子结点  

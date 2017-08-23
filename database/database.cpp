@@ -251,36 +251,20 @@ void database::get(int id, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> 
 		printf_s("key     =%3u\n", dataBPTTmp.key);
 		printf_s("id      =%3u\n", datatypeTmp.id);
 		printf_s("data    =%s\n", datatypeTmp.data);
-		printf_s("remark  =%s\n", datatypeTmp.remark);
+printf_s("remark  =%s\n", datatypeTmp.remark);
 	}
 }
 
-void database::get(unsigned int id)
+void database::get(unsigned int key)
 {
-	printf_s("result from search id=%d\n", id);
-	printf_s("=============================================\n");
-	printf_s("|   key    |    id    |   data   |  remark  |\n");
-	if (bpt_id->search(id)) {
-		vector<indexBPTtype> datas;
-		dataBPTtype dataBPTTmp;
-		datatype datatypeTmp;
-		bpt_id->search0(id, datas);
-		//Method of iterator from http://blog.csdn.net/dgyanyong/article/details/21268469
-		vector<indexBPTtype>::iterator itor;
-		for (itor = datas.begin(); itor != datas.end(); itor++) {
-			printf_s("|%10u", itor->key);
-			bpt->search0(itor->key, dataBPTTmp);
-			db->get(dataBPTTmp, datatypeTmp);
-			printf_s("|%10u", datatypeTmp.id);
-			printf_s("|%10s", datatypeTmp.data);
-			printf_s("|%10s|\n", datatypeTmp.remark);
-		}
-	}
-	else {
-		printf_s("   Can't find id.\n   ");
-	}
-	printf_s("|   key    |    id    |   data   |  remark  |\n");
-	printf_s("=============================================\n");
+	dataBPTtype dataBPTTmp;
+	datatype datatypeTmp;
+	printf_s("|%10u", key);
+	bpt->search0(key, dataBPTTmp);
+	db->get(dataBPTTmp, datatypeTmp);
+	printf_s("|%10u", datatypeTmp.id);
+	printf_s("|%10s", datatypeTmp.data);
+	printf_s("|%10s|\n", datatypeTmp.remark);
 }
 
 void database::get(char * data)
@@ -330,4 +314,181 @@ void database::reopen(string databasePath) {
 	bpt_data = new BPlusTreePlus();
 	db = new databaseIO(indexFileName, valueFileName, availableSpaceFileName, bpt, bpt_id, bpt_data);
 	printf_s("table %s selected successfully.\n", table);
+}
+
+int database::execute(const string command)
+{
+	vector<unsigned int> keys;
+	vector<string> commands;
+	//vector<string> select;
+	SplitString(command, commands, " ");
+	vector<string> where;
+	bool whereFlag = false;
+	for (int i = 0; i < commands.size(); i++) {
+		if (whereFlag) {
+			where.push_back(commands.at(i));
+		}
+		if (commands.at(i) == "where") {
+			whereFlag = true;
+		}
+	}
+	if (whereFlag) {
+		getKeysFromWhere(keys, where);
+	}
+	transform(commands.at(0).begin(), commands.at(0).end(), commands.at(0).begin(), ::tolower);
+	if (commands.at(0) == "select") {
+		//printf_s("result from search id=%d\n", keys.at(i));
+		printf_s("=============================================\n");
+		printf_s("|   key    |    id    |   data   |  remark  |\n");
+		for (int i = 0; i < keys.size(); i++) {
+			get(keys.at(i));
+		}
+		printf_s("|   key    |    id    |   data   |  remark  |\n");
+		printf_s("=============================================\n");
+	}
+	else if (commands.at(0) == "insert") {
+		vector<string> data;
+		SplitString(command, data, "(");
+		string tmp_ = data.at(1);
+		SplitString(tmp_, data, ")");
+		tmp_ = data.at(0);
+		SplitString(tmp_, data, ",");
+		//for (int i = 0; i < data.size(); i++)
+		datatype data_;
+		data_.id = atoi(data.at(0).c_str());
+		vector<string> tmp;
+		SplitString(data.at(1), tmp, "'");
+		strcpy(data_.data, tmp.at(1).c_str());
+		SplitString(data.at(2), tmp, "'");
+		strcpy(data_.remark, tmp.at(1).c_str());
+		insert(data_);
+	}
+	else if (commands.at(0) == "update") {
+
+	}
+	else if (commands.at(0) == "delete") {
+		for (int i = 0; i < keys.size(); i++) {
+			remove(keys.at(i));
+		}
+	}
+	else {
+		return 0;
+	}
+	return 1;
+}
+
+void database::SplitString(const std::string & s, std::vector<std::string>& v, const std::string & c)
+{
+	v.clear();
+	std::string::size_type pos1, pos2;
+	pos2 = s.find(c);
+	pos1 = 0;
+	while (std::string::npos != pos2)
+	{
+		v.push_back(s.substr(pos1, pos2 - pos1));
+
+		pos1 = pos2 + c.size();
+		pos2 = s.find(c, pos1);
+	}
+	if (pos1 != s.length())
+		v.push_back(s.substr(pos1));
+}
+
+bool database::getKeysFromWhere(vector<unsigned int> &keys, vector<string> &where)
+{
+	keys.clear();
+	string idStr = "id";
+	string dataStr = "data";
+	int flag = 0;
+	bool inKeysFlag = false;
+	for (int i = 0; i < where.size(); i++) {
+		if (startWith(where.at(i), idStr)) {
+			where.at(i).erase(where.at(i).begin(), where.at(i).begin() + idStr.size() + 1);
+			int id = atoi(where.at(i).c_str());
+			if (bpt_id->search(id)) {
+				vector<indexBPTtype> datas;
+				bpt_id->search0(id, datas);
+				vector<indexBPTtype>::iterator itor;
+				inKeysFlag = false;
+				if (flag == 1) {
+					vector<unsigned int> keysTmp;
+					for (itor = datas.begin(); itor != datas.end(); itor++) {
+						for (int j = 0; j < keys.size(); j++) {
+							if (keys.at(j) == itor->key) keysTmp.push_back(itor->key);
+						}
+					}
+					keys.clear();
+					keys = keysTmp;
+				}
+				else if (flag == 2) {
+					for (itor = datas.begin(); itor != datas.end(); itor++) {
+						for (int j = 0; j < keys.size(); j++) {
+							if (keys.at(j) == itor->key) {
+								inKeysFlag = true;
+							}
+						}
+						if (!inKeysFlag) keys.push_back(itor->key);
+					}
+				}
+				else {
+					for (itor = datas.begin(); itor != datas.end(); itor++) {
+						keys.push_back(itor->key);
+					}
+				}
+			}
+		}
+		else if (startWith(where.at(i), dataStr)) {
+			where.at(i).erase(where.at(i).begin(), where.at(i).begin() + dataStr.size() + 1);
+			int id = bkdr_hash(where.at(i).c_str());
+			if (bpt_data->search(id)) {
+				vector<indexBPTtype> datas;
+				bpt_data->search0(id, datas);
+				vector<indexBPTtype>::iterator itor;
+				inKeysFlag = false;
+				if (flag == 1) {
+					vector<unsigned int> keysTmp;
+					for (itor = datas.begin(); itor != datas.end(); itor++) {
+						for (int j = 0; j < keys.size(); j++) {
+							if (keys.at(j) == itor->key) keysTmp.push_back(itor->key);
+						}
+					}
+					keys.clear();
+					keys = keysTmp;
+				}
+				else if (flag == 2) {
+					for (itor = datas.begin(); itor != datas.end(); itor++) {
+						for (int j = 0; j < keys.size(); j++) {
+							if (keys.at(j) == itor->key) {
+								inKeysFlag = true;
+							}
+						}
+						if (!inKeysFlag) keys.push_back(itor->key);
+					}
+				}
+				else {
+					for (itor = datas.begin(); itor != datas.end(); itor++) {
+						keys.push_back(itor->key);
+					}
+				}
+			}
+		}
+		else if (where.at(i) == "and" || where.at(i) == "&&") {
+			flag = 1;
+		}
+		else if (where.at(i) == "or" || where.at(i) == "||") {
+			flag = 2;
+		}
+		else {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool database::startWith(string &str, string &startWith)
+{
+	for (int i = 0; i < startWith.size() - 1; i++){
+		if (str[i] != startWith[i]) return false;
+	}
+	return true;
 }
