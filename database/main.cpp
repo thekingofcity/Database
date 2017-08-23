@@ -139,13 +139,14 @@ int main()
 			cout << "Input the Command: ";
 			getline(cin, command);
 			if (DB.execute(command)) {
-				printf_s("Command complete sucessfully.\n");
+				printf_s("Command complete sucessfully.\n\n");
 			}
 			else {
-				printf_s("Syntax error.\n");
+				printf_s("Syntax error.\n\n");
 			}
 			break;
 			//select * where id=3 or data=xfir
+			//select * where id=3 and data=rtkj
 		}
 		default:
 			printf_s("Syntax error.\n");

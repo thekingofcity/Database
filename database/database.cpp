@@ -251,7 +251,7 @@ void database::get(int id, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> 
 		printf_s("key     =%3u\n", dataBPTTmp.key);
 		printf_s("id      =%3u\n", datatypeTmp.id);
 		printf_s("data    =%s\n", datatypeTmp.data);
-printf_s("remark  =%s\n", datatypeTmp.remark);
+		printf_s("remark  =%s\n", datatypeTmp.remark);
 	}
 }
 
@@ -335,8 +335,8 @@ int database::execute(const string command)
 	if (whereFlag) {
 		getKeysFromWhere(keys, where);
 	}
-	transform(commands.at(0).begin(), commands.at(0).end(), commands.at(0).begin(), ::tolower);
-	if (commands.at(0) == "select") {
+	//transform(commands.at(0).begin(), commands.at(0).end(), commands.at(0).begin(), ::tolower);
+	if (commands.at(0) == "select" && whereFlag) {
 		//printf_s("result from search id=%d\n", keys.at(i));
 		printf_s("=============================================\n");
 		printf_s("|   key    |    id    |   data   |  remark  |\n");
@@ -345,6 +345,9 @@ int database::execute(const string command)
 		}
 		printf_s("|   key    |    id    |   data   |  remark  |\n");
 		printf_s("=============================================\n");
+	}
+	else if (commands.at(0) == "select" && !whereFlag) {
+		readALL();
 	}
 	else if (commands.at(0) == "insert") {
 		vector<string> data;
@@ -411,14 +414,14 @@ bool database::getKeysFromWhere(vector<unsigned int> &keys, vector<string> &wher
 				vector<indexBPTtype>::iterator itor;
 				inKeysFlag = false;
 				if (flag == 1) {
-					vector<unsigned int> keysTmp;
 					for (itor = datas.begin(); itor != datas.end(); itor++) {
 						for (int j = 0; j < keys.size(); j++) {
-							if (keys.at(j) == itor->key) keysTmp.push_back(itor->key);
+							if (keys.at(j) != itor->key) {
+								keys.erase(keys.begin() + j);
+								j--;
+							}
 						}
 					}
-					keys.clear();
-					keys = keysTmp;
 				}
 				else if (flag == 2) {
 					for (itor = datas.begin(); itor != datas.end(); itor++) {
@@ -446,14 +449,14 @@ bool database::getKeysFromWhere(vector<unsigned int> &keys, vector<string> &wher
 				vector<indexBPTtype>::iterator itor;
 				inKeysFlag = false;
 				if (flag == 1) {
-					vector<unsigned int> keysTmp;
 					for (itor = datas.begin(); itor != datas.end(); itor++) {
 						for (int j = 0; j < keys.size(); j++) {
-							if (keys.at(j) == itor->key) keysTmp.push_back(itor->key);
+							if (keys.at(j) != itor->key) {
+								keys.erase(keys.begin() + j);
+								j--;
+							}
 						}
 					}
-					keys.clear();
-					keys = keysTmp;
 				}
 				else if (flag == 2) {
 					for (itor = datas.begin(); itor != datas.end(); itor++) {
