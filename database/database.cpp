@@ -5,31 +5,6 @@
 #include "databaseIO.h"
 #include "database.h"
 
-bool database::sortByKey(const dataBPTtype &v1, const dataBPTtype &v2) {
-	return v1.key < v2.key;//Ascend
-}
-
-int conversion(datatype &data, unsigned int id, string datastr, string remark) {
-	if (datastr.size() >= DATASIZE || remark.size() >= REMARKSIZE) {
-		return 0;
-	}
-	else {
-		data.id = id;
-		int i, j = datastr.size();
-		for (i = 0; i <= j; i++) {
-			data.data[i] = datastr[i];
-		}
-		data.data[i] = '\0';
-		j = remark.size();
-		for (i = 0; i <= j; i++) {
-			data.remark[i] = remark[i];
-		}
-		data.remark[i] = '\0';
-		return 1;
-	}
-}
-
-
 database::database(string databasePath)
 {
 	listTable(databasePath);
@@ -45,7 +20,7 @@ database::database(string databasePath)
 	bpt_data = new BPlusTreePlus();
 	//db = new databaseIO(indexFileName, valueFileName, availableSpaceFileName, dataBPT, dataBPT_id);
 	db = new databaseIO(indexFileName, valueFileName, availableSpaceFileName, bpt, bpt_id, bpt_data);
-	printf_s("table %s selected successfully.\n", table);
+	printf_s("Table %s selected successfully.\n", table);
 
 }
 
@@ -55,60 +30,6 @@ database::~database()
 	delete bpt_id;
 	delete bpt;
 	delete db;
-}
-
-dataBPTtype database::fetch(vector<dataBPTtype> &dataBPT, unsigned int key) {
-	int i, j;
-	j = dataBPT.size();
-	for (i = 0; i < j; i++) {
-		if (dataBPT.at(i).key == key) {
-			dataBPTtype dataBPTtypeTmp = dataBPT.at(i);
-			dataBPT.erase(dataBPT.begin() + i);
-			//erase form http://www.cplusplus.com/reference/vector/vector/erase/
-			return dataBPTtypeTmp;
-			//why not use iterator -> can't return iterator
-			//article below still can't fix it
-			//http://www.cnblogs.com/wang7/archive/2012/04/27/2474138.html
-		}
-	}
-	dataBPTtype return0 = { -1,-1,-1 };
-	return return0;
-}
-
-dataBPTtype database::fetchById(vector<dataBPTtype_id> &dataBPT_id, unsigned int id, vector<dataBPTtype> &dataBPT) {
-	int key;
-	//Method of iterator from http://blog.csdn.net/dgyanyong/article/details/21268469
-	vector<dataBPTtype_id>::iterator itor;
-	vector<dataBPTtype_id>::iterator itor2;
-	for (itor = dataBPT_id.begin(); itor != dataBPT_id.end();) {
-		if (itor->id == id) {
-			key = itor->key;
-			itor2 = itor;
-			itor = dataBPT_id.erase(itor);
-			return fetch(dataBPT, key);
-		}
-		else {
-			itor++;
-		}
-	}
-	dataBPTtype return0 = { -1,-1,-1 };
-	return return0;
-}
-
-void database::insert(datatype &data, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id) {
-	int key;
-	dataBPTtype_id dataBPT_idTmp;
-	if (dataBPT.size() == 0) {
-		key = 0;
-	}
-	else {
-		sort(dataBPT.begin(), dataBPT.end(), sortByKey);
-		key = dataBPT.at(dataBPT.size() - 1).key + 1;
-	}
-	dataBPT_idTmp.id = data.id;
-	dataBPT_idTmp.key = key;
-	dataBPT_id.push_back(dataBPT_idTmp);
-	dataBPT.push_back(db->insert(key, data));
 }
 
 void database::insert(datatype &data)
@@ -125,17 +46,6 @@ void database::insert(datatype &data)
 	bpt_data->insert(indexBPTtypeTmp.id, indexBPTtypeTmp);
 	//key->address in file
 	bpt->insert(key, db->insert(key, data));
-}
-
-void database::modify(datatype &data, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id) {
-	dataBPTtype dataBPTTmp = fetchById(dataBPT_id, data.id, dataBPT);
-	if (dataBPTTmp.key == -1) {
-		printf_s("Can't find id=%3d.\n", data.id);
-	}
-	else {
-		db->modify(dataBPTTmp, data);
-		printf_s("Successfully modified id=%3d from database.\n", data.id);
-	}
 }
 
 void database::modify(datatype & data, unsigned int key)
@@ -164,17 +74,6 @@ void database::modify(datatype & data, unsigned int key)
 		printf_s("Can't find key=%d.\n", key);
 	}
 
-}
-
-void database::remove(int id, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id) {
-	dataBPTtype dataBPTTmp = fetchById(dataBPT_id, id, dataBPT);
-	if (dataBPTTmp.key == -1) {
-		printf_s("Can't find id=%d.\n", id);
-	}
-	else {
-		db->remove(dataBPTTmp);
-		printf_s("Successfully removed id=%d from database.\n", id);
-	}
 }
 
 void database::remove(unsigned int key)
@@ -240,21 +139,6 @@ void database::listTable(string databasePath)
 	printf_s("===================================================\n");
 }
 
-void database::get(int id, vector<dataBPTtype> &dataBPT, vector<dataBPTtype_id> &dataBPT_id) {
-	dataBPTtype dataBPTTmp = fetchById(dataBPT_id, id, dataBPT);
-	if (dataBPTTmp.key == -1) {
-		printf_s("Can't find id.\n");
-	}
-	else {
-		datatype datatypeTmp;
-		db->get(dataBPTTmp, datatypeTmp);
-		printf_s("key     =%3u\n", dataBPTTmp.key);
-		printf_s("id      =%3u\n", datatypeTmp.id);
-		printf_s("data    =%s\n", datatypeTmp.data);
-		printf_s("remark  =%s\n", datatypeTmp.remark);
-	}
-}
-
 void database::get(unsigned int key)
 {
 	dataBPTtype dataBPTTmp;
@@ -265,35 +149,6 @@ void database::get(unsigned int key)
 	printf_s("|%10u", datatypeTmp.id);
 	printf_s("|%10s", datatypeTmp.data);
 	printf_s("|%10s|\n", datatypeTmp.remark);
-}
-
-void database::get(char * data)
-{
-	printf_s("result from search data=%s\n", data);
-	printf_s("=============================================\n");
-	printf_s("|   key    |    id    |   data   |  remark  |\n");
-	unsigned int id = bkdr_hash(data);
-	if (bpt_data->search(id)) {
-		vector<indexBPTtype> datas;
-		dataBPTtype dataBPTTmp;
-		datatype datatypeTmp;
-		bpt_data->search0(id, datas);
-		//Method of iterator from http://blog.csdn.net/dgyanyong/article/details/21268469
-		vector<indexBPTtype>::iterator itor;
-		for (itor = datas.begin(); itor != datas.end(); itor++) {
-			printf_s("|%10u", itor->key);
-			bpt->search0(itor->key, dataBPTTmp);
-			db->get(dataBPTTmp, datatypeTmp);
-			printf_s("|%10u", datatypeTmp.id);
-			printf_s("|%10s", datatypeTmp.data);
-			printf_s("|%10s|\n", datatypeTmp.remark);
-		}
-	}
-	else {
-		printf_s("   Can't find data.\n   ");
-	}
-	printf_s("|   key    |    id    |   data   |  remark  |\n");
-	printf_s("=============================================\n");
 }
 
 void database::reopen(string databasePath) {
@@ -337,7 +192,6 @@ int database::execute(const string command)
 	}
 	//transform(commands.at(0).begin(), commands.at(0).end(), commands.at(0).begin(), ::tolower);
 	if (commands.at(0) == "select" && whereFlag) {
-		//printf_s("result from search id=%d\n", keys.at(i));
 		printf_s("=============================================\n");
 		printf_s("|   key    |    id    |   data   |  remark  |\n");
 		for (int i = 0; i < keys.size(); i++) {
@@ -347,7 +201,7 @@ int database::execute(const string command)
 		printf_s("=============================================\n");
 	}
 	else if (commands.at(0) == "select" && !whereFlag) {
-		readALL();
+		db->readALL();
 	}
 	else if (commands.at(0) == "insert") {
 		vector<string> data;
@@ -366,12 +220,63 @@ int database::execute(const string command)
 		strcpy(data_.remark, tmp.at(1).c_str());
 		insert(data_);
 	}
-	else if (commands.at(0) == "update") {
-
+	else if (commands.at(0) == "update" && whereFlag) {
+		vector<string> data;
+		SplitString(command, data, "(");
+		string tmp_ = data.at(1);
+		SplitString(tmp_, data, ")");
+		tmp_ = data.at(0);
+		SplitString(tmp_, data, ",");
+		//for (int i = 0; i < data.size(); i++)
+		datatype data_;
+		data_.id = atoi(data.at(0).c_str());
+		vector<string> tmp;
+		SplitString(data.at(1), tmp, "'");
+		strcpy(data_.data, tmp.at(1).c_str());
+		SplitString(data.at(2), tmp, "'");
+		strcpy(data_.remark, tmp.at(1).c_str());
+		for (int i = 0; i < keys.size(); i++) {
+			modify(data_, keys.at(i));
+		}
 	}
-	else if (commands.at(0) == "delete") {
+	else if (commands.at(0) == "delete" && whereFlag) {
 		for (int i = 0; i < keys.size(); i++) {
 			remove(keys.at(i));
+		}
+	}
+	else if (commands.at(0) == "reopen") {
+		cout << "Input the path of database(like C:\\database\\): ";
+		string databasePath;
+		cin >> databasePath;
+		reopen(databasePath);
+	}
+	else if (commands.at(0) == "flush") {
+		db->flush();
+	}
+	else if (commands.at(0) == "exit") {}
+	else if (commands.at(0) == "test1") {
+		char s[27] = "abcdefghijklmnopqrstuvwxyz";
+		datatype data;
+		for (int i = 1; i < 1000; i++) {
+			data.id = rand() % 50 + 1;
+			data.data[0] = s[rand() % 26];
+			data.data[1] = s[rand() % 26];
+			data.data[2] = s[rand() % 26];
+			data.data[3] = s[rand() % 26];
+			data.data[4] = s[rand() % 26];
+			data.data[5] = '\0';
+			data.remark[0] = s[rand() % 26];
+			data.remark[1] = s[rand() % 26];
+			data.remark[2] = s[rand() % 26];
+			data.remark[3] = '\0';
+			insert(data);
+		}
+	}
+	else if (commands.at(0) == "test2") {
+		unsigned int key;
+		for (int i = 1; i < 200; i++) {
+			key = rand() % 200;
+			remove(key);
 		}
 	}
 	else {
@@ -494,4 +399,11 @@ bool database::startWith(string &str, string &startWith)
 		if (str[i] != startWith[i]) return false;
 	}
 	return true;
+}
+
+void database::toLower(string & str)
+{
+	for (unsigned int i = 0; i < str.length(); ++i) {
+		str[i] = tolower(str[i]);
+	}
 }
