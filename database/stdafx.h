@@ -7,11 +7,7 @@
 
 #include "targetver.h"
 #include <stdio.h>
-#include <tchar.h>
-#include <io.h>
 #include <string>
-#include <iostream>
-#include <fstream>
 #include <vector>
 
 #define DATASIZE 40

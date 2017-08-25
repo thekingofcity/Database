@@ -11,14 +11,13 @@ database::database(string databasePath)
 	int strsize = databasePath.size();
 	char table[40];
 	printf_s("Input the table name: "); scanf_s("%s", &table, 40);
-	string indexFileName = databasePath.append(table); indexFileName.append(".index"); databasePath.erase(strsize);
-	string valueFileName = databasePath.append(table); valueFileName.append(".value"); databasePath.erase(strsize);
-	string availableSpaceFileName = databasePath.append(table); availableSpaceFileName.append(".space");
+	indexFileName = databasePath.append(table); indexFileName.append(".index"); databasePath.erase(strsize);
+	valueFileName = databasePath.append(table); valueFileName.append(".value"); databasePath.erase(strsize);
+	availableSpaceFileName = databasePath.append(table); availableSpaceFileName.append(".space");
 
 	bpt = new BPlusTree();
 	bpt_id = new BPlusTreePlus();
 	bpt_data = new BPlusTreePlus();
-	//db = new databaseIO(indexFileName, valueFileName, availableSpaceFileName, dataBPT, dataBPT_id);
 	db = new databaseIO(indexFileName, valueFileName, availableSpaceFileName, bpt, bpt_id, bpt_data);
 	printf_s("Table %s selected successfully.\n", table);
 
@@ -60,12 +59,12 @@ void database::modify(datatype & data, unsigned int key)
 		indexBPTtypeTmp.id = data.id;
 		indexBPTtypeTmp.key = key;
 		indexBPTtypeTmp.next = NULL;
-		bpt_id->insert0(key, indexBPTtypeTmp);
+		bpt_id->insert(key, indexBPTtypeTmp);
 		//boring stuff to update bpt_data.
 		db->get(dataBPTTmp, datatypeTmp);
-		bpt_id->remove(datatypeTmp.id, key);
+		bpt_data->remove(datatypeTmp.id, key);
 		indexBPTtypeTmp.id = bkdr_hash(data.data);
-		bpt_id->insert0(key, indexBPTtypeTmp);
+		bpt_data->insert(key, indexBPTtypeTmp);
 		//Here's how to update files.
 		db->modify(dataBPTTmp, data);
 		printf_s("Successfully modified key=%d from database.\n", key);
@@ -78,8 +77,6 @@ void database::modify(datatype & data, unsigned int key)
 
 void database::remove(unsigned int key)
 {
-	//printf_s("Input the key you want to delete: ");
-	//scanf_s("%d", &uniqueKey);
 	dataBPTtype dataBPTTmp;
 	if (bpt->search(key) && bpt->search0(key, dataBPTTmp)) {//this line could be simplified
 		//boring stuff to remove key in bpt_id.
@@ -156,10 +153,9 @@ void database::reopen(string databasePath) {
 	listTable(databasePath);
 	char table[40];
 	printf_s("Input the table name: "); scanf_s("%s", &table, 40);
-	string indexFileName = databasePath.append(table); indexFileName.append(".index"); databasePath.erase(strsize);
-	string valueFileName = databasePath.append(table); valueFileName.append(".value"); databasePath.erase(strsize);
-	string availableSpaceFileName = databasePath.append(table); availableSpaceFileName.append(".space");
-	//db->reopen(indexFileName, valueFileName, availableSpaceFileName, dataBPT, dataBPT_id);
+	indexFileName = databasePath.append(table); indexFileName.append(".index"); databasePath.erase(strsize);
+	valueFileName = databasePath.append(table); valueFileName.append(".value"); databasePath.erase(strsize);
+	availableSpaceFileName = databasePath.append(table); availableSpaceFileName.append(".space");
 	delete bpt_data;
 	delete bpt_id;
 	delete bpt;
@@ -169,6 +165,25 @@ void database::reopen(string databasePath) {
 	bpt_data = new BPlusTreePlus();
 	db = new databaseIO(indexFileName, valueFileName, availableSpaceFileName, bpt, bpt_id, bpt_data);
 	printf_s("table %s selected successfully.\n", table);
+}
+
+void database::truncate()
+{
+	delete bpt_data;
+	delete bpt_id;
+	delete bpt;
+	delete db;
+	fstream indexFileStream;
+	fstream valueFileStream;
+	fstream availableSpaceFileStream;
+	indexFileStream.open(indexFileName, ios::binary | ios::in | ios::out | ios::trunc);
+	valueFileStream.open(valueFileName, ios::binary | ios::in | ios::out | ios::trunc);
+	availableSpaceFileStream.open(availableSpaceFileName, ios::binary | ios::in | ios::out | ios::trunc);
+	indexFileStream.close(); valueFileStream.close(); availableSpaceFileStream.close();
+	bpt = new BPlusTree();
+	bpt_id = new BPlusTreePlus();
+	bpt_data = new BPlusTreePlus();
+	db = new databaseIO(indexFileName, valueFileName, availableSpaceFileName, bpt, bpt_id, bpt_data);
 }
 
 int database::execute(const string command)
@@ -188,7 +203,9 @@ int database::execute(const string command)
 		}
 	}
 	if (whereFlag) {
-		getKeysFromWhere(keys, where);
+		if (!getKeysFromWhere(keys, where)) {
+			whereFlag = false;
+		}
 	}
 	//transform(commands.at(0).begin(), commands.at(0).end(), commands.at(0).begin(), ::tolower);
 	if (commands.at(0) == "select" && whereFlag) {
@@ -211,14 +228,19 @@ int database::execute(const string command)
 		tmp_ = data.at(0);
 		SplitString(tmp_, data, ",");
 		//for (int i = 0; i < data.size(); i++)
-		datatype data_;
-		data_.id = atoi(data.at(0).c_str());
-		vector<string> tmp;
-		SplitString(data.at(1), tmp, "'");
-		strcpy(data_.data, tmp.at(1).c_str());
-		SplitString(data.at(2), tmp, "'");
-		strcpy(data_.remark, tmp.at(1).c_str());
-		insert(data_);
+		if (data.size() == 3) {
+			datatype data_;
+			data_.id = atoi(data.at(0).c_str());
+			vector<string> tmp;
+			SplitString(data.at(1), tmp, "'");
+			strcpy(data_.data, tmp.at(1).c_str());
+			SplitString(data.at(2), tmp, "'");
+			strcpy(data_.remark, tmp.at(1).c_str());
+			insert(data_);
+		}
+		else {
+			return 0;
+		}
 	}
 	else if (commands.at(0) == "update" && whereFlag) {
 		vector<string> data;
@@ -228,15 +250,20 @@ int database::execute(const string command)
 		tmp_ = data.at(0);
 		SplitString(tmp_, data, ",");
 		//for (int i = 0; i < data.size(); i++)
-		datatype data_;
-		data_.id = atoi(data.at(0).c_str());
-		vector<string> tmp;
-		SplitString(data.at(1), tmp, "'");
-		strcpy(data_.data, tmp.at(1).c_str());
-		SplitString(data.at(2), tmp, "'");
-		strcpy(data_.remark, tmp.at(1).c_str());
-		for (int i = 0; i < keys.size(); i++) {
-			modify(data_, keys.at(i));
+		if (data.size() == 3) {
+			datatype data_;
+			data_.id = atoi(data.at(0).c_str());
+			vector<string> tmp;
+			SplitString(data.at(1), tmp, "'");
+			strcpy(data_.data, tmp.at(1).c_str());
+			SplitString(data.at(2), tmp, "'");
+			strcpy(data_.remark, tmp.at(1).c_str());
+			for (int i = 0; i < keys.size(); i++) {
+				modify(data_, keys.at(i));
+			}
+		}
+		else {
+			return 0;
 		}
 	}
 	else if (commands.at(0) == "delete" && whereFlag) {
@@ -254,6 +281,9 @@ int database::execute(const string command)
 		db->flush();
 	}
 	else if (commands.at(0) == "exit") {}
+	else if (commands.at(0) == "truncate") {
+		truncate();
+	}
 	else if (commands.at(0) == "test1") {
 		char s[27] = "abcdefghijklmnopqrstuvwxyz";
 		datatype data;
@@ -346,38 +376,44 @@ bool database::getKeysFromWhere(vector<unsigned int> &keys, vector<string> &wher
 			}
 		}
 		else if (startWith(where.at(i), dataStr)) {
-			where.at(i).erase(where.at(i).begin(), where.at(i).begin() + dataStr.size() + 1);
-			int id = bkdr_hash(where.at(i).c_str());
-			if (bpt_data->search(id)) {
-				vector<indexBPTtype> datas;
-				bpt_data->search0(id, datas);
-				vector<indexBPTtype>::iterator itor;
-				inKeysFlag = false;
-				if (flag == 1) {
-					for (itor = datas.begin(); itor != datas.end(); itor++) {
-						for (int j = 0; j < keys.size(); j++) {
-							if (keys.at(j) != itor->key) {
-								keys.erase(keys.begin() + j);
-								j--;
+			vector<string> data;
+			SplitString(where.at(i), data, "'");
+			if (data.size() > 1) {
+				int id = bkdr_hash(data.at(1).c_str());
+				if (bpt_data->search(id)) {
+					vector<indexBPTtype> datas;
+					bpt_data->search0(id, datas);
+					vector<indexBPTtype>::iterator itor;
+					inKeysFlag = false;
+					if (flag == 1) {
+						for (itor = datas.begin(); itor != datas.end(); itor++) {
+							for (int j = 0; j < keys.size(); j++) {
+								if (keys.at(j) != itor->key) {
+									keys.erase(keys.begin() + j);
+									j--;
+								}
 							}
 						}
 					}
-				}
-				else if (flag == 2) {
-					for (itor = datas.begin(); itor != datas.end(); itor++) {
-						for (int j = 0; j < keys.size(); j++) {
-							if (keys.at(j) == itor->key) {
-								inKeysFlag = true;
+					else if (flag == 2) {
+						for (itor = datas.begin(); itor != datas.end(); itor++) {
+							for (int j = 0; j < keys.size(); j++) {
+								if (keys.at(j) == itor->key) {
+									inKeysFlag = true;
+								}
 							}
+							if (!inKeysFlag) keys.push_back(itor->key);
 						}
-						if (!inKeysFlag) keys.push_back(itor->key);
+					}
+					else {
+						for (itor = datas.begin(); itor != datas.end(); itor++) {
+							keys.push_back(itor->key);
+						}
 					}
 				}
-				else {
-					for (itor = datas.begin(); itor != datas.end(); itor++) {
-						keys.push_back(itor->key);
-					}
-				}
+			}
+			else {
+				return false;
 			}
 		}
 		else if (where.at(i) == "and" || where.at(i) == "&&") {

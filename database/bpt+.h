@@ -9,7 +9,6 @@ public:
 	BPlusTreePlus();
 	~BPlusTreePlus();
 	bool insert(KeyType key, const indexBPTtype &data);
-	bool insert0(KeyType key, const indexBPTtype &data);
 	bool remove(KeyType key);
 	bool remove(KeyType key, KeyType uniqueKey);
 	bool search(KeyType key); // 查找是否存在  
@@ -17,6 +16,7 @@ public:
 	KeyType maxKey() { return MaxKey + 1; }
 	BPTLeafNodePlus * head() { return DataHead; }
 private:
+	bool insert0(KeyType key, const indexBPTtype &data);//if key already existed, use this.
 	void recursive_insert(BPTNodePlus *parentNode, KeyType key, const indexBPTtype &data);
 	void recursive_insert0(BPTNodePlus *parentNode, KeyType key, const indexBPTtype &data);
 	void recursive_remove(BPTNodePlus *parentNode, KeyType key);

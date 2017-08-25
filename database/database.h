@@ -1,5 +1,8 @@
 #pragma once
 
+#include <io.h>
+#include <iostream>
+#include <fstream>
 #include <algorithm>
 #include "time.h"
 #include "databaseIO.h"
@@ -11,18 +14,20 @@ public:
 	database(string databasePath);
 	~database();
 	void insert(datatype &data);
-	void modify(datatype &data,unsigned int key);
+	void modify(datatype &data, unsigned int key);
 	void remove(unsigned int key);
 	void get(unsigned int key);
 	void reopen(string databasePath);
+	void truncate();
 	int execute(const string command);
 private:
+	string indexFileName = "", valueFileName = "", availableSpaceFileName = "";
 	BPlusTree * bpt;
 	BPlusTreePlus * bpt_id;
 	BPlusTreePlus * bpt_data;
 	class databaseIO *db;
 	void listTable(string databasePath);
-	//sort in class from http://www.cnblogs.com/vongang/archive/2012/03/21/2409293.html
+	//(DEPRECATED)sort in class from http://www.cnblogs.com/vongang/archive/2012/03/21/2409293.html
 	void SplitString(const std::string& s, std::vector<std::string>& v, const std::string& c);
 	bool getKeysFromWhere(vector<unsigned int> &keys, vector<string> &where);
 	bool startWith(string &str, string &startWith);

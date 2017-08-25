@@ -118,6 +118,7 @@ dataBPTtype databaseIO::insert(unsigned int key, datatype &data)
 	dataBPTTmp.key = key;
 	indexFileStream.clear();
 	valueFileStream.clear();
+	//If there is vacant in valueFile, just overwritten it.
 	if (availableSpace.size() != 0) {
 		p_int = availableSpace.at(availableSpace.size() - 1);
 		streampos p = p_int;
@@ -132,6 +133,7 @@ dataBPTtype databaseIO::insert(unsigned int key, datatype &data)
 		p_int = valueFileStream.tellg();
 		valueFileStream.write((char *)(&data), DATATYPESIZE);
 	}
+	//If there is vacant in indexFile, just overwritten it.
 	if (availableSpaceIndex.size() != 0) {
 		streampos p = availableSpaceIndex.at(availableSpaceIndex.size() - 1);
 		availableSpaceIndex.pop_back();
