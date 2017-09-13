@@ -53,6 +53,7 @@ databaseIO::databaseIO(
 			dataBPTtypeTmp.key = key;
 			dataBPTtypeTmp.valuePos = p_int;
 			bpt->insert(key, dataBPTtypeTmp);
+			//printf_s("Key %u loaded successfully.\n", key);
 		}
 	}
 

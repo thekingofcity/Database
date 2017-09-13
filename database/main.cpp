@@ -20,7 +20,7 @@ unsigned int bkdr_hash(const char* key)
 
 int main()
 {
-	cout << "Input the path of database(like C:\\database\\):" << endl;
+	cout << "Input the path of database(like C:\\database\\):";
 	string databasePath;
 	cin >> databasePath;
 	//databasePath = "C:\\database\\";
@@ -34,6 +34,7 @@ int main()
 	while (command != "exit") {
 		cout << "Input the Command: ";
 		getline(cin, command);
+		if (command == "") continue;
 		start = clock();
 		if (DB.execute(command)) {
 			end = clock();

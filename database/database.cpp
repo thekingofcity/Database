@@ -114,15 +114,21 @@ void database::listTable(string databasePath)
 	string toSearch = databasePath.append("*.index"); databasePath.erase(strsize);
 	//const char *to_search = "C:\\database\\*.index";        //欲查找的文件，支持通配符
 	const char *to_search = toSearch.c_str();        //欲查找的文件，支持通配符
-	long handle;                                    //用于查找的句柄
+	long handle,last_handle;                                    //用于查找的句柄
 	struct _finddata_t fileinfo;                    //文件信息的结构体
 	handle = _findfirst(to_search, &fileinfo);      //第一次查找
-	if (-1 == handle) {
-
-	}
+	if (-1 == handle) {}
 	else {
-		while (!_findnext(handle, &fileinfo));			//循环查找其他符合的文件，直到找不到其他的为止
+		printf_s("|%12s ", fileinfo.name);			//打印出找到的文件的文件名
+		tick = fileinfo.time_access;
+		tm = *localtime(&tick);
+		strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", &tm);
+		printf("|%21s", timestr);
+		printf("|%12u |\n", fileinfo.size);
+		//handle = last_handle;
+		while (!_findnext(handle, &fileinfo))			//循环查找其他符合的文件，直到找不到其他的为止
 		{
+			//if (handle == last_handle) continue;
 			printf_s("|%12s ", fileinfo.name);			//打印出找到的文件的文件名
 			tick = fileinfo.time_access;
 			tm = *localtime(&tick);
@@ -198,7 +204,7 @@ int database::execute(const string command)
 		if (whereFlag) {
 			where.push_back(commands.at(i));
 		}
-		if (commands.at(i) == "where") {
+		if (commands.at(i) == "where" || commands.at(i) == "WHERE") {
 			whereFlag = true;
 		}
 	}
@@ -207,7 +213,7 @@ int database::execute(const string command)
 			whereFlag = false;
 		}
 	}
-	//transform(commands.at(0).begin(), commands.at(0).end(), commands.at(0).begin(), ::tolower);
+	transform(commands.at(0).begin(), commands.at(0).end(), commands.at(0).begin(), tolower);
 	if (commands.at(0) == "select" && whereFlag) {
 		printf_s("=============================================\n");
 		printf_s("|   key    |    id    |   data   |  remark  |\n");
@@ -237,6 +243,7 @@ int database::execute(const string command)
 			SplitString(data.at(2), tmp, "'");
 			strcpy(data_.remark, tmp.at(1).c_str());
 			insert(data_);
+			db->flush();
 		}
 		else {
 			return 0;
@@ -261,6 +268,7 @@ int database::execute(const string command)
 			for (int i = 0; i < keys.size(); i++) {
 				modify(data_, keys.at(i));
 			}
+			db->flush();
 		}
 		else {
 			return 0;
@@ -270,6 +278,7 @@ int database::execute(const string command)
 		for (int i = 0; i < keys.size(); i++) {
 			remove(keys.at(i));
 		}
+		db->flush();
 	}
 	else if (commands.at(0) == "reopen") {
 		cout << "Input the path of database(like C:\\database\\): ";
@@ -287,8 +296,8 @@ int database::execute(const string command)
 	else if (commands.at(0) == "test1") {
 		char s[27] = "abcdefghijklmnopqrstuvwxyz";
 		datatype data;
-		for (int i = 1; i < 1000; i++) {
-			data.id = rand() % 50 + 1;
+		for (int i = 1; i < 10; i++) {
+			data.id = rand() % 3 + 1;
 			data.data[0] = s[rand() % 26];
 			data.data[1] = s[rand() % 26];
 			data.data[2] = s[rand() % 26];
@@ -304,8 +313,8 @@ int database::execute(const string command)
 	}
 	else if (commands.at(0) == "test2") {
 		unsigned int key;
-		for (int i = 1; i < 200; i++) {
-			key = rand() % 200;
+		for (int i = 1; i < 2; i++) {
+			key = rand() % 2;
 			remove(key);
 		}
 	}
