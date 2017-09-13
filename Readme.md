@@ -36,7 +36,7 @@ Example: SELECT *
 
 As the original SQL, WHERE can be added after other 4 keywords.
 
-string after data= shuold be added ' before and after.
+string after data= shuold be added character ' before and after.
 
 Example: SELECT WHERE id=10 and data='something'
 
@@ -46,6 +46,8 @@ Example: INSERT (1, 'Hello World', 'via thekingofcity')
 
 ### 1.2.4 UPDATE
 
+character ' should be added before and after data and remark.
+
 Example: UPDATE (1, 'Hello World', 'via thekingofcity') WHERE data='something'
 
 Note: where is compulsory.
@@ -53,6 +55,8 @@ Note: where is compulsory.
 ### 1.2.5 DELETE
 
 Example: DELETE where id=10
+
+Note: where is compulsory.
 
 ## 1.3 Other supported function
 
