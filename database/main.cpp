@@ -20,7 +20,7 @@ unsigned int bkdr_hash(const char* key)
 
 int main()
 {
-	cout << "Input the path of database(like C:\\database\\):";
+	cout << "Input the path of database(like C:\\database\\):  ";
 	string databasePath;
 	cin >> databasePath;
 	//databasePath = "C:\\database\\";
@@ -39,7 +39,7 @@ int main()
 		if (DB.execute(command)) {
 			end = clock();
 			tC = double(end - start) / CLOCKS_PER_SEC;
-			printf_s("Command completed sucessfully in %lf s.\n", tC);
+			printf_s("Command completed sucessfully in %lf s.\n\n", tC);
 		}
 		else {
 			printf_s("Syntax error.\n\n");
